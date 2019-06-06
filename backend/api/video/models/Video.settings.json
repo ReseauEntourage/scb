@@ -1,0 +1,42 @@
+{
+  "connection": "default",
+  "collectionName": "videos",
+  "info": {
+    "name": "video",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": [
+      "created_at",
+      "updated_at"
+    ],
+    "comment": ""
+  },
+  "attributes": {
+    "Titre": {
+      "type": "string"
+    },
+    "Texte": {
+      "type": "text"
+    },
+    "parcour": {
+      "model": "parcours",
+      "via": "videos"
+    },
+    "url_video": {
+      "type": "string"
+    },
+    "chapitre": {
+      "enum": [
+        "Comprendre",
+        "Changer",
+        "Agir"
+      ],
+      "type": "enumeration"
+    },
+    "ordre": {
+      "type": "string"
+    }
+  }
+}

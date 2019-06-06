@@ -1,0 +1,42 @@
+{
+  "connection": "default",
+  "collectionName": "entetes",
+  "info": {
+    "name": "entete",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "comment": ""
+  },
+  "attributes": {
+    "Titre": {
+      "type": "string"
+    },
+    "duree": {
+      "type": "integer"
+    },
+    "background": {
+      "model": "file",
+      "via": "related",
+      "plugin": "upload"
+    },
+    "texte_personnage": {
+      "type": "text"
+    },
+    "parcour": {
+      "model": "parcours",
+      "via": "entetes"
+    },
+    "chapitre": {
+      "enum": [
+        "Comprendre",
+        "Changer",
+        "Agir",
+        "Intro"
+      ],
+      "type": "enumeration"
+    }
+  }
+}
