@@ -1,0 +1,53 @@
+.container {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+.video-container {
+    margin-top: 60px;
+    height: calc(100vh - 60px - 80px);
+    .video-content {
+        height: 100%;
+    }
+
+    .video__video-subtitle {
+        margin-top: 90px;
+        h2 {
+            font-family: 'Lato';
+            font-size: 16px;
+            font-weight: bold;
+            color: #C1C1C1;
+            text-transform: uppercase;
+        }
+    }
+
+    .video__video-name {
+        margin-top: 20px;
+        h1 {
+            font-family: 'Lato';
+            font-size: 24px;
+            font-weight: bold;
+            color: #3D3D3D;
+            line-height: 32px;
+        }
+        
+    }
+
+    .video__video-text-container {
+        margin-top: 20px;
+        p {
+            font-family: 'Lato';
+            font-size: 16px;
+            font-weight: 400;
+            color: #9F9F9F;
+            line-height: 170%;
+        }
+    }
+}
+
+.player {
+    margin-top: 30px;
+}
+
+.video__paragraphe {
+    margin-bottom: 20px;
+}

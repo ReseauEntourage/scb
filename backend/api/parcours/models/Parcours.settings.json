@@ -1,0 +1,60 @@
+{
+  "connection": "default",
+  "collectionName": "parcours",
+  "info": {
+    "name": "parcours",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "comment": ""
+  },
+  "attributes": {
+    "Titre": {
+      "type": "string"
+    },
+    "couleur": {
+      "type": "string"
+    },
+    "personnage": {
+      "model": "file",
+      "via": "related",
+      "plugin": "upload"
+    },
+    "url_slug": {
+      "type": "string"
+    },
+    "card_personnage": {
+      "model": "file",
+      "via": "related",
+      "plugin": "upload"
+    },
+    "couleur_2": {
+      "type": "string"
+    },
+    "duration": {
+      "type": "integer"
+    },
+    "character_name": {
+      "type": "string"
+    },
+    "entetes": {
+      "collection": "entete",
+      "via": "parcour"
+    },
+    "quotes": {
+      "collection": "quote",
+      "via": "parcours"
+    },
+    "textes": {
+      "collection": "texte",
+      "dominant": true,
+      "via": "parcours"
+    },
+    "videos": {
+      "collection": "video",
+      "via": "parcour"
+    }
+  }
+}

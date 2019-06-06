@@ -1,0 +1,43 @@
+{
+  "connection": "default",
+  "collectionName": "quotes",
+  "info": {
+    "name": "quote",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": [
+      "created_at",
+      "updated_at"
+    ],
+    "comment": ""
+  },
+  "attributes": {
+    "titre": {
+      "type": "string"
+    },
+    "paragraphe": {
+      "type": "text"
+    },
+    "character_quote": {
+      "type": "text"
+    },
+    "parcours": {
+      "collection": "parcours",
+      "via": "quotes",
+      "dominant": true
+    },
+    "chapitre": {
+      "enum": [
+        "Comprendre",
+        "Changer",
+        "Agir"
+      ],
+      "type": "enumeration"
+    },
+    "ordre": {
+      "type": "string"
+    }
+  }
+}

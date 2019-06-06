@@ -1,0 +1,42 @@
+{
+  "connection": "default",
+  "collectionName": "textes",
+  "info": {
+    "name": "texte",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": [
+      "created_at",
+      "updated_at"
+    ],
+    "comment": ""
+  },
+  "attributes": {
+    "titre": {
+      "type": "string"
+    },
+    "paragraphe": {
+      "type": "text"
+    },
+    "sous_titre": {
+      "type": "string"
+    },
+    "parcours": {
+      "collection": "parcours",
+      "via": "textes"
+    },
+    "chapitre": {
+      "enum": [
+        "Comprendre",
+        "Changer",
+        "Agir"
+      ],
+      "type": "enumeration"
+    },
+    "ordre": {
+      "type": "string"
+    }
+  }
+}
