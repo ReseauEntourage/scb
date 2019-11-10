@@ -11,7 +11,7 @@ export default class Card extends Component {
         const { title, color_1, color_2, duration, link, img } = this.props
 
         return (
-            <Link href={`/parcours?id=${link}`} as={`/parcours/${link}`}>
+            <Link href={`/parcours/?id=${link}/introduction`} as={`/parcours/${link}/introduction`}>
                 <a>
                     <div className="card-container" style={{ background: "#" + color_1 }}>
                         <div className="card__data-container">

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import Link from 'next/link';
+// import Link from 'next/link';
 
 import './Button.scss'
 
@@ -48,36 +48,36 @@ export default class Button extends Component {
             {
                 this.nextChapitre === "conclusion" 
                 ?
-                    <Link href={`/parcours/?id=${slug}/conclusion`} as={`/parcours/${slug}/conclusion`}>
-                        <a>
+                    // <Link href={`/parcours/?id=${slug}/conclusion`} as={`/parcours/${slug}/conclusion`}>
+                        <a href={`/parcours/${slug}/conclusion`}>
                             <div className={`button-container ${param === 'quote' ? 'quote' : '' }`} style={{ background: "#" + color }}>
                                 <span className="button-title">
                                     { title }
                                 </span>
                             </div>
                         </a>
-                    </Link>
+                    // </Link>
                 :   ( this.change === false 
                         ?
-                        <Link href={`/parcours/?id=${slug}/?chapitre=${this.nextChapitre}/?order=${order}`} as={`/parcours/${slug}/${this.nextChapitre}/${nextLink}`}>
-                            <a>
+                        // <Link href={`/parcours/?id=${slug}/?chapitre=${this.nextChapitre}/?order=${order}`} as={`/parcours/${slug}/${this.nextChapitre}/${nextLink}`}>
+                            <a href={`/parcours/${slug}/${this.nextChapitre}/${nextLink}`}>
                                 <div className={`button-container ${param === 'quote' ? 'quote' : '' }`} style={{ background: "#" + color }}>
                                     <span className="button-title">
                                         { title }
                                     </span>
                                 </div>
                             </a>
-                        </Link>
+                        // </Link>
                         :
-                        <Link href={`/parcours/?id=${slug}/?chapitre=${this.nextChapitre}/?order=0`} as={`/parcours/${slug}/${this.nextChapitre}/0`}>
-                            <a>
+                        // <Link href={`/parcours/?id=${slug}/?chapitre=${this.nextChapitre}/?order=0`} as={`/parcours/${slug}/${this.nextChapitre}/0`}>
+                            <a href={`/parcours/${slug}/${this.nextChapitre}/0`}>
                                 <div className={`button-container ${param === 'quote' ? 'quote' : '' }`} style={{ background: "#" + color }}>
                                     <span className="button-title">
                                         { title }
                                     </span>
                                 </div>
                             </a>
-                        </Link>
+                        // </Link>
                     )
             }
             

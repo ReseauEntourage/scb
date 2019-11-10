@@ -1,21 +1,20 @@
-import Entete from "../components/Entete/Entete";
-import React from "react";
-
+import Entete from '../components/Entete/Entete'
+import React from 'react'
 
 class Index extends React.Component {
-
-  static getInitialProps ({ query: { id, chapitre } }) {
+  static getInitialProps({ query: { id, chapitre } }) {
     return { postId: id, postChapitre: chapitre }
   }
-  
+
   render() {
-    console.log(this.props.postChapitre)
     return (
-      <div className="container-fluid">
-        <Entete id={this.props.postId} enumeration={this.props.postChapitre}></Entete>
+      <div className='container-fluid'>
+        <Entete
+          id={this.props.postId}
+          enumeration={this.props.postChapitre}></Entete>
       </div>
-    );
+    )
   }
 }
 
-export default Index;
+export default Index

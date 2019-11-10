@@ -1,20 +1,32 @@
 .character__image {
-    width: 190px;
-    height: 100px;
-    
+    width: auto;
+    height: 140px;
+    margin-left: 10px;
+
+    @media (min-width: 768px) {
+        margin-left: 22%;
+    }
+    @media (min-width: 992px) {
+        margin-left: 28%; 
+    }
+    @media (min-width: 1200px) {
+        height: 180px;
+    }
 }
 
 .character-container.entete {
     position: absolute;
-    bottom: calc(30px + 46px);       
+    bottom: 50px;
+    
 }
 
-.character-container .quote {
+.character-container.quote {
     position: relative;
+    margin-top: 50px;
     //  bottom: calc(30px + 46px);       
 }
 .character__bubble {
-    width: 60vw;
+    margin-right: 10px;
     background: white;
     padding: 15px;
     margin-left: calc(30vw - 15px);
@@ -22,6 +34,15 @@
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.05);
     position: relative;
     z-index: -1;
+    @media (min-width: 576px) {
+        margin-right: 10%;
+    }
+    @media (min-width: 992px) {
+        margin-right: 10%;
+    }
+    @media (min-width: 1200px) {
+        margin-right: 10%;
+    }
     &::after {
         content: "";
         width: 20px;
@@ -39,8 +60,8 @@
     }
     p {
         font-family: 'Lato';
-        font-size: 18px;
-        font-weight: 500;
+        font-size: 16px;
+        font-weight: 400;
         margin-left: 10px;
         margin-top: 2px;
         margin-bottom: 0;

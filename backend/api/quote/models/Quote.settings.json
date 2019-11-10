@@ -23,21 +23,22 @@
     "character_quote": {
       "type": "text"
     },
-    "parcours": {
-      "collection": "parcours",
-      "via": "quotes",
-      "dominant": true
-    },
     "chapitre": {
       "enum": [
         "Comprendre",
         "Changer",
         "Agir"
       ],
-      "type": "enumeration"
+      "type": "enumeration",
+      "default": "Comprendre"
     },
     "ordre": {
       "type": "string"
+    },
+    "parcours": {
+      "collection": "parcours",
+      "via": "quotes",
+      "dominant": true
     }
   }
 }

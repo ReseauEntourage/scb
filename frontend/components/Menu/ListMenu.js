@@ -2,21 +2,14 @@ import React, { Component } from 'react'
 
 import './Menu.scss'
 
+import scb from './../../static/images/scb.png'
+import close from './../../static/images/close.svg'
+
 export default class ListMenu extends Component {
     
     constructor(props) {
         super(props)
-
-        this.elementItems = []
-        this.elementOrderItems = []
-        this.elementOrderItemsCopy = []
-        this.elementTitleItems = []
-        this.elementTitleItemsCopy = []
-
-        this.final = []
-
-        this.maMap = new Map()
-
+        
         this.state = {
             newMap: new Map()
         }
@@ -25,7 +18,6 @@ export default class ListMenu extends Component {
         const { data, nb } = this.props
 
         this.setState({
-                // newMap: this.initList( data, nb )
                 newMap: this.getArrayofLink(data)
             }
         )
@@ -54,90 +46,67 @@ export default class ListMenu extends Component {
         
         let newArray = []
         data.parcours.map( ( parcour, key) => {
-            newArray = parcour.textes.concat(parcour.quotes).concat(parcour.videos)
+            newArray = parcour.textes.concat(parcour.quotes).concat(parcour.videos).concat(parcour.quizzes)
         })
-    
-        const arr = [...newArray].sort(this.fieldSorter(['-chapitre', 'ordre']));
+        const arr = [...newArray].sort(this.fieldSorter(['-chapitre', 'ordre']))
 
-        console.log(arr)
-        
         return arr
     
     }
-    // initList(data, nb) {
-    //     for(let i = 3; i < nb; i++) {
-    //         this.elementItems.push(i)
-    //     }
-    //     for(const parcour of data.parcours) {
-    //         if(parcour.textes.length !== 0) {
-    //             for(const text of parcour.textes) {
-    //                 this.elementOrderItems.push(text.ordre)
-    //             }
-    //         }
-    //         if(parcour.videos.length !== 0) {
-    //             for(const video of parcour.videos) {
-    //                 this.elementOrderItems.push(video.ordre)
-    //             }
-    //         }
-    //         if(parcour.quotes.length !== 0) {
-    //             for(const quote of parcour.quotes) {
-    //                 this.elementOrderItems.push(quote.ordre)
-    //             }
-    //         }
-    //         for(const element of this.elementOrderItems) {
-    //             if(parcour.textes.length !== 0) {
-    //                 for(const text of parcour.textes) {
-    //                     if(text.ordre === element) {
-    //                         this.elementTitleItems.push(text.titre) 
-    //                     }
-    //                 }
-    //             }
-
-    //             if(parcour.videos.length !== 0) {
-    //                 for(const video of parcour.videos) {
-    //                     if(video.ordre === element) {
-    //                         this.elementTitleItems.push(video.Titre)
-    //                     }
-    //                 }
-    //             }
-
-    //             if(parcour.quotes.length !== 0) {
-    //                 for(const quote of parcour.quotes) {
-    //                     if(quote.ordre === element) {
-    //                         this.elementTitleItems.push(quote.titre)
-    //                     }
-    //                 }
-    //             }
-    //         }          
-            
-    //         for (let i=0; i < this.elementItems.length; i++) {
-    //             this.maMap.set(this.elementOrderItems[i], this.elementTitleItems[i])
-    //             this.state.newMap = new Map([...this.maMap].sort())
-    //         }
-
-    //         return this.state.newMap
-    //     }
-        
-    // }
     
     render() {
+        const {handleCloseMenuIntro, slug} = this.props
         const arr = Array.from(this.state.newMap)
-        // arr.map( ( valeur, key) => {
-        //    console.log(valeur)
-        // }) 
         return (
-            <div className="Salut">
-                <ul>
-                {
-                   arr.map( ( valeur, key) => (
-                        <li key={key}> 
-                            <a href={`/parcours/les-femmes-dans-la-rue/${valeur[0]}`}>
-                            <span className="number"> { valeur.ordre }</span>
-                            <span className="title"> { valeur.titre }</span>
-                            </a>
-                        </li>
-                   )) 
-                }
+            <div className="menu__inside-menu__container">
+                <div className="menu__sidebar__top-container">
+                    <div className="menu__sidebar-close-container" onClick={ handleCloseMenuIntro }>
+                        <img src={close} alt="" className="menu__sidebar-close"/>
+                    </div>
+                </div>
+                <ul className="menu--intra">
+                    <h2 className="menu--intra__title"> Comprendre </h2>
+                    { arr.map(( valeur, key) => {
+                        if(valeur.chapitre === "Comprendre") {
+                            return (  
+                                <li key={key}> 
+                                    <a href={`/parcours/${slug}/${valeur.chapitre.toLowerCase()}/${valeur.ordre}`}>
+                                        <div className="number"> { key + 3} </div>
+                                        <span className="title"> { valeur.titre }</span>
+                                    </a>
+                                </li>
+                            )
+                        } else return null
+                        
+                    })}
+                    <h2 className="menu--intra__title"> Changer de Regard </h2>
+                    { arr.map(( valeur, key) => {
+                        if(valeur.chapitre === "Changer") {
+                            return (  
+                                <li key={key}> 
+                                    <a href={`/parcours/${slug}/${valeur.chapitre.toLowerCase()}/${valeur.ordre}`}>
+                                        <div className="number"> { key + 3} </div>
+                                        <span className="title"> { valeur.titre }</span>
+                                    </a>
+                                </li>
+                            )
+                        } else return null
+                        
+                    })}
+                    <h2 className="menu--intra__title"> Agir </h2>
+                    { arr.map(( valeur, key) => {
+                        if(valeur.chapitre === "Agir") {
+                            return (  
+                                <li key={key}> 
+                                    <a href={`/parcours/${slug}/${valeur.chapitre.toLowerCase()}/${valeur.ordre}`}>
+                                        <div className="number"> { key + 3} </div>
+                                        <span className="title"> { valeur.titre }</span>
+                                    </a>
+                                </li>
+                            )
+                        } else return null
+                        
+                    })}
                 </ul>
             </div>
         )

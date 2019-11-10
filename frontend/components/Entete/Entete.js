@@ -22,11 +22,18 @@ export default class Entete extends Component {
     
     render() {
         const { id, enumeration } = this.props
+
+        let ordre = 1
         return (
             <Query query={ GET_ENTETE_PER_SLUG  } variables={ { id, enumeration } }>
                 {({ loading, error, data }) => {
                     if (error) return <Error></Error>
                     if (loading) return <div>Loading</div>
+
+                    let quizzes_length 
+                    for(const parcour of data.parcours) {
+                        quizzes_length = parcour.quizzes.length
+                    }
                     return (
                         <div>
                         {
@@ -37,14 +44,14 @@ export default class Entete extends Component {
                                 data.parcours.map( (parcour, key) => ( 
                                 parcour.entetes.map( (entete, key) => (
                                     <div className="entete-container" key={key}>
-                                        <BackgroundImage img={entete.background.url}></BackgroundImage>
+                                        <BackgroundImage img={parcour.background_mobile.url} desktop_img={parcour.background_desktop.url}></BackgroundImage>
                                         <div className="back-button" onClick={() => Router.back()} >
                                             <img src={backbtn} alt="arrow back" />
                                         </div>
                                         <div className="data-container"> 
                                             <div className="entete__time-container">
                                                 <img className="svg-clock" src={clock} alt="clock img"/>
-                                                <span className="time-text"> { entete.duree } MIN</span>
+                                                <span className="time-text"> { parcour.duration } MIN</span>
                                             </div> 
                                             <h1 className="data-title">{ entete.Titre }</h1>
                                         </div>
@@ -55,7 +62,7 @@ export default class Entete extends Component {
                                             color={parcour.couleur}
                                             param={'entete'}
                                         />
-                                        <EnteteButton title={"commencer"} color={parcour.couleur} slug={parcour.url_slug} chapitre={enumeration}></EnteteButton>
+                                        <EnteteButton title={"commencer"} color={parcour.couleur} slug={parcour.url_slug} chapitre={enumeration} quizz={quizzes_length}></EnteteButton>
                                     </div>
                                 ))
                                     

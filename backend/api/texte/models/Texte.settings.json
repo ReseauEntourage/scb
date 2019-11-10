@@ -20,23 +20,21 @@
     "paragraphe": {
       "type": "text"
     },
-    "sous_titre": {
-      "type": "string"
-    },
-    "parcours": {
-      "collection": "parcours",
-      "via": "textes"
-    },
     "chapitre": {
       "enum": [
         "Comprendre",
         "Changer",
         "Agir"
       ],
-      "type": "enumeration"
+      "type": "enumeration",
+      "default": "Comprendre"
     },
     "ordre": {
       "type": "string"
+    },
+    "parcours": {
+      "collection": "parcours",
+      "via": "textes"
     }
   }
 }

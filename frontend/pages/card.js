@@ -8,7 +8,6 @@ import { GET_PARCOURS } from './../graphql/querries'
 import Menu from './../components/Menu/Menu'
 
 class Cards extends React.Component {
-  
   render() {
     return (
         <Query query={ GET_PARCOURS } >

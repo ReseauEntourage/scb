@@ -5,6 +5,7 @@ import './Quote.scss'
 
 import Button from './../Button/Button'
 import SCBCharacter from './../SCBCharacter/SCBCharacter'
+import { Markdown } from 'react-showdown';
 
 
 import { Query } from 'react-apollo'
@@ -27,6 +28,7 @@ const Quote = ( { id, quote, color, order, slug, character, character_name, char
     return (
         <Query query={ GET_QUOTE_INFO } variables={ { slug, order, chapitre } }>
         {({ loading, error, data }) => {
+            if (loading) return <div></div>
             return(
             <div className="container">
                 <Menu slug={ slug }/>
@@ -36,17 +38,13 @@ const Quote = ( { id, quote, color, order, slug, character, character_name, char
                         quote.map( (text, key) => (
                             <div className="video-content" key={key}>
                                 <div className="video__video-subtitle">
-                                    <h2> { order } </h2>
+                                    <h2> { chapitre } </h2>
                                 </div>
                                 <div className="video__video-name">
                                     <h1> { text.titre } </h1>
                                 </div>
                                 <div className="video__video-text-container">
-                                    { 
-                                        paragraphes.map( (paragraphe, key) => (
-                                            <p className="video__paragraphe" key={key}> { paragraphe } </p>
-                                        ) ) 
-                                    }
+                                    <Markdown markup={ text.paragraphe } />     
                                 </div>
                                 <SCBCharacter 
                                     image={ character } 

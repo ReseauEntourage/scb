@@ -1,7 +1,8 @@
 const withSass = require('@zeit/next-sass');
 const withCss = require('@zeit/next-css');
+const withProgressBar = require('next-progressbar')
 
-module.exports = withSass(withCss({
+module.exports = withProgressBar(withSass(withCss({
   webpack (config) {
     config.module.rules.push({
       test: /\.(png|svg|eot|otf|ttf|woff|woff2)$/,
@@ -18,4 +19,4 @@ module.exports = withSass(withCss({
 
     return config
   }
-}));
+})));

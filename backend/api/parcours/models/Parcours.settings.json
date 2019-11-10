@@ -7,7 +7,10 @@
   },
   "options": {
     "increments": true,
-    "timestamps": true,
+    "timestamps": [
+      "created_at",
+      "updated_at"
+    ],
     "comment": ""
   },
   "attributes": {
@@ -39,13 +42,20 @@
     "character_name": {
       "type": "string"
     },
-    "entetes": {
-      "collection": "entete",
-      "via": "parcour"
+    "background_mobile": {
+      "model": "file",
+      "via": "related",
+      "plugin": "upload"
     },
-    "quotes": {
-      "collection": "quote",
-      "via": "parcours"
+    "defis": {
+      "collection": "defi",
+      "via": "parcours",
+      "dominant": true
+    },
+    "background_desktop": {
+      "model": "file",
+      "via": "related",
+      "plugin": "upload"
     },
     "textes": {
       "collection": "texte",
@@ -54,6 +64,18 @@
     },
     "videos": {
       "collection": "video",
+      "via": "parcour"
+    },
+    "quotes": {
+      "collection": "quote",
+      "via": "parcours"
+    },
+    "entetes": {
+      "collection": "entete",
+      "via": "parcour"
+    },
+    "quizzes": {
+      "collection": "quizz",
       "via": "parcour"
     }
   }

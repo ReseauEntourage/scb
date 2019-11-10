@@ -1,4 +1,4 @@
-((window["webpackJsonp"] = window["webpackJsonp"] || []).push([["static/development/pages/_app.js"],{
+(window["webpackJsonp"] = window["webpackJsonp"] || []).push([["static/development/pages/_app.js"],{
 
 /***/ "./lib/apollo.js":
 /*!***********************!*\
@@ -73,8 +73,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_10___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_10__);
 /* harmony import */ var _apollo__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./apollo */ "./lib/apollo.js");
-/* harmony import */ var next_server_head__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! next-server/head */ "./node_modules/next-server/head.js");
-/* harmony import */ var next_server_head__WEBPACK_IMPORTED_MODULE_12___default = /*#__PURE__*/__webpack_require__.n(next_server_head__WEBPACK_IMPORTED_MODULE_12__);
+/* harmony import */ var next_head__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! next/head */ "./node_modules/next-server/dist/lib/head.js");
+/* harmony import */ var next_head__WEBPACK_IMPORTED_MODULE_12___default = /*#__PURE__*/__webpack_require__.n(next_head__WEBPACK_IMPORTED_MODULE_12__);
 /* harmony import */ var react_apollo__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! react-apollo */ "./node_modules/react-apollo/react-apollo.esm.js");
 
 
@@ -156,7 +156,7 @@ __webpack_require__.r(__webpack_exports__);
                 case 16:
                   // getDataFromTree does not call componentWillUnmount
                   // head side effect therefore need to be cleared manually
-                  next_server_head__WEBPACK_IMPORTED_MODULE_12___default.a.rewind();
+                  next_head__WEBPACK_IMPORTED_MODULE_12___default.a.rewind();
 
                 case 17:
                   // Extract query data from the Apollo store
@@ -409,55 +409,6 @@ function _assertThisInitialized(self) {
 }
 
 module.exports = _assertThisInitialized;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime-corejs2/helpers/asyncToGenerator.js":
-/*!*************************************************************************!*\
-  !*** ./node_modules/@babel/runtime-corejs2/helpers/asyncToGenerator.js ***!
-  \*************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _Promise = __webpack_require__(/*! ../core-js/promise */ "./node_modules/@babel/runtime-corejs2/core-js/promise.js");
-
-function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
-  try {
-    var info = gen[key](arg);
-    var value = info.value;
-  } catch (error) {
-    reject(error);
-    return;
-  }
-
-  if (info.done) {
-    resolve(value);
-  } else {
-    _Promise.resolve(value).then(_next, _throw);
-  }
-}
-
-function _asyncToGenerator(fn) {
-  return function () {
-    var self = this,
-        args = arguments;
-    return new _Promise(function (resolve, reject) {
-      var gen = fn.apply(self, args);
-
-      function _next(value) {
-        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value);
-      }
-
-      function _throw(err) {
-        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err);
-      }
-
-      _next(undefined);
-    });
-  };
-}
-
-module.exports = _asyncToGenerator;
 
 /***/ }),
 
@@ -1262,11 +1213,372 @@ module.exports = __webpack_require__(/*! regenerator-runtime */ "./node_modules/
 
 /***/ }),
 
+/***/ "./node_modules/@wry/context/lib/context.esm.js":
+/*!******************************************************!*\
+  !*** ./node_modules/@wry/context/lib/context.esm.js ***!
+  \******************************************************/
+/*! exports provided: Slot, asyncFromGen, bind, noContext, setTimeout, wrapYieldingFiberMethods */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Slot", function() { return Slot; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "asyncFromGen", function() { return asyncFromGen; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bind", function() { return bind; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "noContext", function() { return noContext; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setTimeout", function() { return setTimeoutWithContext; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "wrapYieldingFiberMethods", function() { return wrapYieldingFiberMethods; });
+// This currentContext variable will only be used if the makeSlotClass
+// function is called, which happens only if this is the first copy of the
+// @wry/context package to be imported.
+var currentContext = null;
+// This unique internal object is used to denote the absence of a value
+// for a given Slot, and is never exposed to outside code.
+var MISSING_VALUE = {};
+var idCounter = 1;
+// Although we can't do anything about the cost of duplicated code from
+// accidentally bundling multiple copies of the @wry/context package, we can
+// avoid creating the Slot class more than once using makeSlotClass.
+var makeSlotClass = function () { return /** @class */ (function () {
+    function Slot() {
+        // If you have a Slot object, you can find out its slot.id, but you cannot
+        // guess the slot.id of a Slot you don't have access to, thanks to the
+        // randomized suffix.
+        this.id = [
+            "slot",
+            idCounter++,
+            Date.now(),
+            Math.random().toString(36).slice(2),
+        ].join(":");
+    }
+    Slot.prototype.hasValue = function () {
+        for (var context_1 = currentContext; context_1; context_1 = context_1.parent) {
+            // We use the Slot object iself as a key to its value, which means the
+            // value cannot be obtained without a reference to the Slot object.
+            if (this.id in context_1.slots) {
+                var value = context_1.slots[this.id];
+                if (value === MISSING_VALUE)
+                    break;
+                if (context_1 !== currentContext) {
+                    // Cache the value in currentContext.slots so the next lookup will
+                    // be faster. This caching is safe because the tree of contexts and
+                    // the values of the slots are logically immutable.
+                    currentContext.slots[this.id] = value;
+                }
+                return true;
+            }
+        }
+        if (currentContext) {
+            // If a value was not found for this Slot, it's never going to be found
+            // no matter how many times we look it up, so we might as well cache
+            // the absence of the value, too.
+            currentContext.slots[this.id] = MISSING_VALUE;
+        }
+        return false;
+    };
+    Slot.prototype.getValue = function () {
+        if (this.hasValue()) {
+            return currentContext.slots[this.id];
+        }
+    };
+    Slot.prototype.withValue = function (value, callback, 
+    // Given the prevalence of arrow functions, specifying arguments is likely
+    // to be much more common than specifying `this`, hence this ordering:
+    args, thisArg) {
+        var _a;
+        var slots = (_a = {
+                __proto__: null
+            },
+            _a[this.id] = value,
+            _a);
+        var parent = currentContext;
+        currentContext = { parent: parent, slots: slots };
+        try {
+            // Function.prototype.apply allows the arguments array argument to be
+            // omitted or undefined, so args! is fine here.
+            return callback.apply(thisArg, args);
+        }
+        finally {
+            currentContext = parent;
+        }
+    };
+    // Capture the current context and wrap a callback function so that it
+    // reestablishes the captured context when called.
+    Slot.bind = function (callback) {
+        var context = currentContext;
+        return function () {
+            var saved = currentContext;
+            try {
+                currentContext = context;
+                return callback.apply(this, arguments);
+            }
+            finally {
+                currentContext = saved;
+            }
+        };
+    };
+    // Immediately run a callback function without any captured context.
+    Slot.noContext = function (callback, 
+    // Given the prevalence of arrow functions, specifying arguments is likely
+    // to be much more common than specifying `this`, hence this ordering:
+    args, thisArg) {
+        if (currentContext) {
+            var saved = currentContext;
+            try {
+                currentContext = null;
+                // Function.prototype.apply allows the arguments array argument to be
+                // omitted or undefined, so args! is fine here.
+                return callback.apply(thisArg, args);
+            }
+            finally {
+                currentContext = saved;
+            }
+        }
+        else {
+            return callback.apply(thisArg, args);
+        }
+    };
+    return Slot;
+}()); };
+// We store a single global implementation of the Slot class as a permanent
+// non-enumerable symbol property of the Array constructor. This obfuscation
+// does nothing to prevent access to the Slot class, but at least it ensures
+// the implementation (i.e. currentContext) cannot be tampered with, and all
+// copies of the @wry/context package (hopefully just one) will share the
+// same Slot implementation. Since the first copy of the @wry/context package
+// to be imported wins, this technique imposes a very high cost for any
+// future breaking changes to the Slot class.
+var globalKey = "@wry/context:Slot";
+var host = Array;
+var Slot = host[globalKey] || function () {
+    var Slot = makeSlotClass();
+    try {
+        Object.defineProperty(host, globalKey, {
+            value: host[globalKey] = Slot,
+            enumerable: false,
+            writable: false,
+            configurable: false,
+        });
+    }
+    finally {
+        return Slot;
+    }
+}();
+
+var bind = Slot.bind, noContext = Slot.noContext;
+function setTimeoutWithContext(callback, delay) {
+    return setTimeout(bind(callback), delay);
+}
+// Turn any generator function into an async function (using yield instead
+// of await), with context automatically preserved across yields.
+function asyncFromGen(genFn) {
+    return function () {
+        var gen = genFn.apply(this, arguments);
+        var boundNext = bind(gen.next);
+        var boundThrow = bind(gen.throw);
+        return new Promise(function (resolve, reject) {
+            function invoke(method, argument) {
+                try {
+                    var result = method.call(gen, argument);
+                }
+                catch (error) {
+                    return reject(error);
+                }
+                var next = result.done ? resolve : invokeNext;
+                if (isPromiseLike(result.value)) {
+                    result.value.then(next, result.done ? reject : invokeThrow);
+                }
+                else {
+                    next(result.value);
+                }
+            }
+            var invokeNext = function (value) { return invoke(boundNext, value); };
+            var invokeThrow = function (error) { return invoke(boundThrow, error); };
+            invokeNext();
+        });
+    };
+}
+function isPromiseLike(value) {
+    return value && typeof value.then === "function";
+}
+// If you use the fibers npm package to implement coroutines in Node.js,
+// you should call this function at least once to ensure context management
+// remains coherent across any yields.
+var wrappedFibers = [];
+function wrapYieldingFiberMethods(Fiber) {
+    // There can be only one implementation of Fiber per process, so this array
+    // should never grow longer than one element.
+    if (wrappedFibers.indexOf(Fiber) < 0) {
+        var wrap = function (obj, method) {
+            var fn = obj[method];
+            obj[method] = function () {
+                return noContext(fn, arguments, this);
+            };
+        };
+        // These methods can yield, according to
+        // https://github.com/laverdet/node-fibers/blob/ddebed9b8ae3883e57f822e2108e6943e5c8d2a8/fibers.js#L97-L100
+        wrap(Fiber, "yield");
+        wrap(Fiber.prototype, "run");
+        wrap(Fiber.prototype, "throwInto");
+        wrappedFibers.push(Fiber);
+    }
+    return Fiber;
+}
+
+
+//# sourceMappingURL=context.esm.js.map
+
+
+/***/ }),
+
+/***/ "./node_modules/@wry/equality/lib/equality.esm.js":
+/*!********************************************************!*\
+  !*** ./node_modules/@wry/equality/lib/equality.esm.js ***!
+  \********************************************************/
+/*! exports provided: default, equal */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "equal", function() { return equal; });
+var _a = Object.prototype, toString = _a.toString, hasOwnProperty = _a.hasOwnProperty;
+var previousComparisons = new Map();
+/**
+ * Performs a deep equality check on two JavaScript values, tolerating cycles.
+ */
+function equal(a, b) {
+    try {
+        return check(a, b);
+    }
+    finally {
+        previousComparisons.clear();
+    }
+}
+function check(a, b) {
+    // If the two values are strictly equal, our job is easy.
+    if (a === b) {
+        return true;
+    }
+    // Object.prototype.toString returns a representation of the runtime type of
+    // the given value that is considerably more precise than typeof.
+    var aTag = toString.call(a);
+    var bTag = toString.call(b);
+    // If the runtime types of a and b are different, they could maybe be equal
+    // under some interpretation of equality, but for simplicity and performance
+    // we just return false instead.
+    if (aTag !== bTag) {
+        return false;
+    }
+    switch (aTag) {
+        case '[object Array]':
+            // Arrays are a lot like other objects, but we can cheaply compare their
+            // lengths as a short-cut before comparing their elements.
+            if (a.length !== b.length)
+                return false;
+        // Fall through to object case...
+        case '[object Object]': {
+            if (previouslyCompared(a, b))
+                return true;
+            var aKeys = Object.keys(a);
+            var bKeys = Object.keys(b);
+            // If `a` and `b` have a different number of enumerable keys, they
+            // must be different.
+            var keyCount = aKeys.length;
+            if (keyCount !== bKeys.length)
+                return false;
+            // Now make sure they have the same keys.
+            for (var k = 0; k < keyCount; ++k) {
+                if (!hasOwnProperty.call(b, aKeys[k])) {
+                    return false;
+                }
+            }
+            // Finally, check deep equality of all child properties.
+            for (var k = 0; k < keyCount; ++k) {
+                var key = aKeys[k];
+                if (!check(a[key], b[key])) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        case '[object Error]':
+            return a.name === b.name && a.message === b.message;
+        case '[object Number]':
+            // Handle NaN, which is !== itself.
+            if (a !== a)
+                return b !== b;
+        // Fall through to shared +a === +b case...
+        case '[object Boolean]':
+        case '[object Date]':
+            return +a === +b;
+        case '[object RegExp]':
+        case '[object String]':
+            return a == "" + b;
+        case '[object Map]':
+        case '[object Set]': {
+            if (a.size !== b.size)
+                return false;
+            if (previouslyCompared(a, b))
+                return true;
+            var aIterator = a.entries();
+            var isMap = aTag === '[object Map]';
+            while (true) {
+                var info = aIterator.next();
+                if (info.done)
+                    break;
+                // If a instanceof Set, aValue === aKey.
+                var _a = info.value, aKey = _a[0], aValue = _a[1];
+                // So this works the same way for both Set and Map.
+                if (!b.has(aKey)) {
+                    return false;
+                }
+                // However, we care about deep equality of values only when dealing
+                // with Map structures.
+                if (isMap && !check(aValue, b.get(aKey))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+    // Otherwise the values are not equal.
+    return false;
+}
+function previouslyCompared(a, b) {
+    // Though cyclic references can make an object graph appear infinite from the
+    // perspective of a depth-first traversal, the graph still contains a finite
+    // number of distinct object references. We use the previousComparisons cache
+    // to avoid comparing the same pair of object references more than once, which
+    // guarantees termination (even if we end up comparing every object in one
+    // graph to every object in the other graph, which is extremely unlikely),
+    // while still allowing weird isomorphic structures (like rings with different
+    // lengths) a chance to pass the equality test.
+    var bSet = previousComparisons.get(a);
+    if (bSet) {
+        // Return true here because we can be sure false will be returned somewhere
+        // else if the objects are not equivalent.
+        if (bSet.has(b))
+            return true;
+    }
+    else {
+        previousComparisons.set(a, bSet = new Set);
+    }
+    bSet.add(b);
+    return false;
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (equal);
+
+//# sourceMappingURL=equality.esm.js.map
+
+
+/***/ }),
+
 /***/ "./node_modules/apollo-boost/lib/bundle.esm.js":
 /*!*****************************************************!*\
   !*** ./node_modules/apollo-boost/lib/bundle.esm.js ***!
   \*****************************************************/
-/*! exports provided: ApolloClient, ObservableQuery, NetworkStatus, isApolloError, ApolloError, FetchType, HttpLink, gql, default, Observable, getOperationName, createOperation, makePromise, toPromise, fromPromise, fromError, empty, from, split, concat, ApolloLink, execute, InMemoryCache, defaultDataIdFromObject, StoreReader, assertIdValue, WriteError, enhanceErrorWithDocument, StoreWriter, HeuristicFragmentMatcher, IntrospectionFragmentMatcher, ObjectCache, defaultNormalizedCacheFactory */
+/*! exports provided: ApolloClient, ApolloError, FetchType, NetworkStatus, ObservableQuery, isApolloError, HttpLink, gql, default, Observable, getOperationName, createOperation, makePromise, toPromise, fromPromise, fromError, empty, from, split, concat, ApolloLink, execute, HeuristicFragmentMatcher, InMemoryCache, IntrospectionFragmentMatcher, ObjectCache, StoreReader, StoreWriter, WriteError, assertIdValue, defaultDataIdFromObject, defaultNormalizedCacheFactory, enhanceErrorWithDocument */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1275,15 +1587,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var apollo_client__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! apollo-client */ "./node_modules/apollo-client/bundle.esm.js");
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "ApolloClient", function() { return apollo_client__WEBPACK_IMPORTED_MODULE_1__["ApolloClient"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "ObservableQuery", function() { return apollo_client__WEBPACK_IMPORTED_MODULE_1__["ObservableQuery"]; });
-
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "NetworkStatus", function() { return apollo_client__WEBPACK_IMPORTED_MODULE_1__["NetworkStatus"]; });
-
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "isApolloError", function() { return apollo_client__WEBPACK_IMPORTED_MODULE_1__["isApolloError"]; });
-
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "ApolloError", function() { return apollo_client__WEBPACK_IMPORTED_MODULE_1__["ApolloError"]; });
 
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "FetchType", function() { return apollo_client__WEBPACK_IMPORTED_MODULE_1__["FetchType"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "NetworkStatus", function() { return apollo_client__WEBPACK_IMPORTED_MODULE_1__["NetworkStatus"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "ObservableQuery", function() { return apollo_client__WEBPACK_IMPORTED_MODULE_1__["ObservableQuery"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "isApolloError", function() { return apollo_client__WEBPACK_IMPORTED_MODULE_1__["isApolloError"]; });
 
 /* harmony import */ var apollo_link__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! apollo-link */ "./node_modules/apollo-link/lib/bundle.esm.js");
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Observable", function() { return apollo_link__WEBPACK_IMPORTED_MODULE_2__["Observable"]; });
@@ -1313,27 +1625,27 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "execute", function() { return apollo_link__WEBPACK_IMPORTED_MODULE_2__["execute"]; });
 
 /* harmony import */ var apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! apollo-cache-inmemory */ "./node_modules/apollo-cache-inmemory/lib/bundle.esm.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "InMemoryCache", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["InMemoryCache"]; });
-
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "defaultDataIdFromObject", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["defaultDataIdFromObject"]; });
-
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "StoreReader", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["StoreReader"]; });
-
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "assertIdValue", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["assertIdValue"]; });
-
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "WriteError", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["WriteError"]; });
-
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "enhanceErrorWithDocument", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["enhanceErrorWithDocument"]; });
-
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "StoreWriter", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["StoreWriter"]; });
-
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "HeuristicFragmentMatcher", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["HeuristicFragmentMatcher"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "InMemoryCache", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["InMemoryCache"]; });
 
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "IntrospectionFragmentMatcher", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["IntrospectionFragmentMatcher"]; });
 
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "ObjectCache", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["ObjectCache"]; });
 
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "StoreReader", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["StoreReader"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "StoreWriter", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["StoreWriter"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "WriteError", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["WriteError"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "assertIdValue", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["assertIdValue"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "defaultDataIdFromObject", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["defaultDataIdFromObject"]; });
+
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "defaultNormalizedCacheFactory", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["defaultNormalizedCacheFactory"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "enhanceErrorWithDocument", function() { return apollo_cache_inmemory__WEBPACK_IMPORTED_MODULE_3__["enhanceErrorWithDocument"]; });
 
 /* harmony import */ var apollo_link_http__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! apollo-link-http */ "./node_modules/apollo-link-http/lib/bundle.esm.js");
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "HttpLink", function() { return apollo_link_http__WEBPACK_IMPORTED_MODULE_4__["HttpLink"]; });
@@ -1387,7 +1699,7 @@ var DefaultClient = (function (_super) {
         }
         var request = config.request, uri = config.uri, credentials = config.credentials, headers = config.headers, fetch = config.fetch, fetchOptions = config.fetchOptions, clientState = config.clientState, cacheRedirects = config.cacheRedirects, errorCallback = config.onError, name = config.name, version = config.version, resolvers = config.resolvers, typeDefs = config.typeDefs, fragmentMatcher = config.fragmentMatcher;
         var cache = config.cache;
-         false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_7__["invariant"])(!cache || !cacheRedirects, 'Incompatible cache configuration. If providing `cache` then ' +
+         false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_7__["invariant"])(!cache || !cacheRedirects, 'Incompatible cache configuration. When not providing `cache`, ' +
             'configure the provided instance with `cacheRedirects` instead.');
         if (!cache) {
             cache = cacheRedirects
@@ -1476,27 +1788,26 @@ var DefaultClient = (function (_super) {
 /*!**************************************************************!*\
   !*** ./node_modules/apollo-cache-inmemory/lib/bundle.esm.js ***!
   \**************************************************************/
-/*! exports provided: InMemoryCache, defaultDataIdFromObject, StoreReader, assertIdValue, WriteError, enhanceErrorWithDocument, StoreWriter, HeuristicFragmentMatcher, IntrospectionFragmentMatcher, ObjectCache, defaultNormalizedCacheFactory */
+/*! exports provided: HeuristicFragmentMatcher, InMemoryCache, IntrospectionFragmentMatcher, ObjectCache, StoreReader, StoreWriter, WriteError, assertIdValue, defaultDataIdFromObject, defaultNormalizedCacheFactory, enhanceErrorWithDocument */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "InMemoryCache", function() { return InMemoryCache; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "defaultDataIdFromObject", function() { return defaultDataIdFromObject; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "StoreReader", function() { return StoreReader; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "assertIdValue", function() { return assertIdValue; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "WriteError", function() { return WriteError; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "enhanceErrorWithDocument", function() { return enhanceErrorWithDocument; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "StoreWriter", function() { return StoreWriter; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "HeuristicFragmentMatcher", function() { return HeuristicFragmentMatcher; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "InMemoryCache", function() { return InMemoryCache; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "IntrospectionFragmentMatcher", function() { return IntrospectionFragmentMatcher; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ObjectCache", function() { return ObjectCache; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "StoreReader", function() { return StoreReader; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "StoreWriter", function() { return StoreWriter; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "WriteError", function() { return WriteError; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "assertIdValue", function() { return assertIdValue; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "defaultDataIdFromObject", function() { return defaultDataIdFromObject; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "defaultNormalizedCacheFactory", function() { return defaultNormalizedCacheFactory$1; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "enhanceErrorWithDocument", function() { return enhanceErrorWithDocument; });
 /* harmony import */ var tslib__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.js");
 /* harmony import */ var apollo_cache__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! apollo-cache */ "./node_modules/apollo-cache/lib/bundle.esm.js");
 /* harmony import */ var apollo_utilities__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! apollo-utilities */ "./node_modules/apollo-utilities/lib/bundle.esm.js");
-/* harmony import */ var optimism__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! optimism */ "./node_modules/optimism/lib/index.js");
-/* harmony import */ var optimism__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(optimism__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var optimism__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! optimism */ "./node_modules/optimism/lib/bundle.esm.js");
 /* harmony import */ var ts_invariant__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ts-invariant */ "./node_modules/ts-invariant/lib/invariant.esm.js");
 
 
@@ -1570,13 +1881,12 @@ var HeuristicFragmentMatcher = (function () {
     };
     HeuristicFragmentMatcher.prototype.match = function (idValue, typeCondition, context) {
         var obj = context.store.get(idValue.id);
-        if (!obj && idValue.id === 'ROOT_QUERY') {
-            return true;
-        }
+        var isRootQuery = idValue.id === 'ROOT_QUERY';
         if (!obj) {
-            return false;
+            return isRootQuery;
         }
-        if (!obj.__typename) {
+        var _a = obj.__typename, __typename = _a === void 0 ? isRootQuery && 'Query' : _a;
+        if (!__typename) {
             if (shouldWarn()) {
                  false || ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"].warn("You're using fragments in your queries, but either don't have the addTypename:\n  true option set in Apollo Client, or you are trying to write a fragment to the store without the __typename.\n   Please turn on the addTypename option and include __typename when writing fragments so that Apollo Client\n   can accurately match fragments.");
                  false || ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"].warn('Could not find __typename on Fragment ', typeCondition, obj);
@@ -1585,7 +1895,7 @@ var HeuristicFragmentMatcher = (function () {
             }
             return 'heuristic';
         }
-        if (obj.__typename === typeCondition) {
+        if (__typename === typeCondition) {
             return true;
         }
         if (shouldWarn()) {
@@ -1613,15 +1923,17 @@ var IntrospectionFragmentMatcher = (function () {
     IntrospectionFragmentMatcher.prototype.match = function (idValue, typeCondition, context) {
          false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"])(this.isReady, 'FragmentMatcher.match() was called before FragmentMatcher.init()');
         var obj = context.store.get(idValue.id);
+        var isRootQuery = idValue.id === 'ROOT_QUERY';
         if (!obj) {
-            return false;
+            return isRootQuery;
         }
-         false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"])(obj.__typename, "Cannot match fragment because __typename property is missing: " + JSON.stringify(obj));
-        if (obj.__typename === typeCondition) {
+        var _a = obj.__typename, __typename = _a === void 0 ? isRootQuery && 'Query' : _a;
+         false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"])(__typename, "Cannot match fragment because __typename property is missing: " + JSON.stringify(obj));
+        if (__typename === typeCondition) {
             return true;
         }
         var implementingTypes = this.possibleTypesMap[typeCondition];
-        if (implementingTypes && implementingTypes.indexOf(obj.__typename) > -1) {
+        if (implementingTypes && implementingTypes.indexOf(__typename) > -1) {
             return true;
         }
         return false;
@@ -1638,41 +1950,11 @@ var IntrospectionFragmentMatcher = (function () {
     return IntrospectionFragmentMatcher;
 }());
 
-var CacheKeyNode = (function () {
-    function CacheKeyNode() {
-        this.children = null;
-        this.key = null;
-    }
-    CacheKeyNode.prototype.lookup = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        return this.lookupArray(args);
-    };
-    CacheKeyNode.prototype.lookupArray = function (array) {
-        var node = this;
-        array.forEach(function (value) {
-            node = node.getOrCreate(value);
-        });
-        return node.key || (node.key = Object.create(null));
-    };
-    CacheKeyNode.prototype.getOrCreate = function (value) {
-        var map = this.children || (this.children = new Map());
-        var node = map.get(value);
-        if (!node) {
-            map.set(value, (node = new CacheKeyNode()));
-        }
-        return node;
-    };
-    return CacheKeyNode;
-}());
-
 var hasOwn = Object.prototype.hasOwnProperty;
 var DepTrackingCache = (function () {
     function DepTrackingCache(data) {
-        if (data === void 0) { data = Object.create(null); }
         var _this = this;
+        if (data === void 0) { data = Object.create(null); }
         this.data = data;
         this.depend = Object(optimism__WEBPACK_IMPORTED_MODULE_3__["wrap"])(function (dataId) { return _this.data[dataId]; }, {
             disposable: true,
@@ -1729,21 +2011,19 @@ function defaultNormalizedCacheFactory(seed) {
 }
 
 var StoreReader = (function () {
-    function StoreReader(cacheKeyRoot) {
-        if (cacheKeyRoot === void 0) { cacheKeyRoot = new CacheKeyNode; }
+    function StoreReader(_a) {
         var _this = this;
-        this.cacheKeyRoot = cacheKeyRoot;
-        var reader = this;
-        var executeStoreQuery = reader.executeStoreQuery, executeSelectionSet = reader.executeSelectionSet;
+        var _b = _a === void 0 ? {} : _a, _c = _b.cacheKeyRoot, cacheKeyRoot = _c === void 0 ? new optimism__WEBPACK_IMPORTED_MODULE_3__["KeyTrie"](apollo_utilities__WEBPACK_IMPORTED_MODULE_2__["canUseWeakMap"]) : _c, _d = _b.freezeResults, freezeResults = _d === void 0 ? false : _d;
+        var _e = this, executeStoreQuery = _e.executeStoreQuery, executeSelectionSet = _e.executeSelectionSet, executeSubSelectedArray = _e.executeSubSelectedArray;
+        this.freezeResults = freezeResults;
         this.executeStoreQuery = Object(optimism__WEBPACK_IMPORTED_MODULE_3__["wrap"])(function (options) {
             return executeStoreQuery.call(_this, options);
         }, {
             makeCacheKey: function (_a) {
                 var query = _a.query, rootValue = _a.rootValue, contextValue = _a.contextValue, variableValues = _a.variableValues, fragmentMatcher = _a.fragmentMatcher;
                 if (contextValue.store instanceof DepTrackingCache) {
-                    return reader.cacheKeyRoot.lookup(query, contextValue.store, fragmentMatcher, JSON.stringify(variableValues), rootValue.id);
+                    return cacheKeyRoot.lookup(contextValue.store, query, fragmentMatcher, JSON.stringify(variableValues), rootValue.id);
                 }
-                return;
             }
         });
         this.executeSelectionSet = Object(optimism__WEBPACK_IMPORTED_MODULE_3__["wrap"])(function (options) {
@@ -1752,9 +2032,18 @@ var StoreReader = (function () {
             makeCacheKey: function (_a) {
                 var selectionSet = _a.selectionSet, rootValue = _a.rootValue, execContext = _a.execContext;
                 if (execContext.contextValue.store instanceof DepTrackingCache) {
-                    return reader.cacheKeyRoot.lookup(selectionSet, execContext.contextValue.store, execContext.fragmentMatcher, JSON.stringify(execContext.variableValues), rootValue.id);
+                    return cacheKeyRoot.lookup(execContext.contextValue.store, selectionSet, execContext.fragmentMatcher, JSON.stringify(execContext.variableValues), rootValue.id);
                 }
-                return;
+            }
+        });
+        this.executeSubSelectedArray = Object(optimism__WEBPACK_IMPORTED_MODULE_3__["wrap"])(function (options) {
+            return executeSubSelectedArray.call(_this, options);
+        }, {
+            makeCacheKey: function (_a) {
+                var field = _a.field, array = _a.array, execContext = _a.execContext;
+                if (execContext.contextValue.store instanceof DepTrackingCache) {
+                    return cacheKeyRoot.lookup(execContext.contextValue.store, field, array, JSON.stringify(execContext.variableValues));
+                }
             }
         });
     }
@@ -1879,6 +2168,9 @@ var StoreReader = (function () {
             }
         });
         finalResult.result = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_2__["mergeDeepArray"])(objectsToMerge);
+        if (this.freezeResults && "development" !== 'production') {
+            Object.freeze(finalResult.result);
+        }
         return finalResult;
     };
     StoreReader.prototype.executeField = function (object, typename, field, execContext) {
@@ -1891,10 +2183,17 @@ var StoreReader = (function () {
         };
         var readStoreResult = readStoreResolver(object, typename, fieldName, args, contextValue, info);
         if (Array.isArray(readStoreResult.result)) {
-            return this.combineExecResults(readStoreResult, this.executeSubSelectedArray(field, readStoreResult.result, execContext));
+            return this.combineExecResults(readStoreResult, this.executeSubSelectedArray({
+                field: field,
+                array: readStoreResult.result,
+                execContext: execContext,
+            }));
         }
         if (!field.selectionSet) {
             assertSelectionSetForIdValue(field, readStoreResult.result);
+            if (this.freezeResults && "development" !== 'production') {
+                Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_2__["maybeDeepFreeze"])(readStoreResult);
+            }
             return readStoreResult;
         }
         if (readStoreResult.result == null) {
@@ -1923,8 +2222,9 @@ var StoreReader = (function () {
             missing: missing,
         };
     };
-    StoreReader.prototype.executeSubSelectedArray = function (field, result, execContext) {
+    StoreReader.prototype.executeSubSelectedArray = function (_a) {
         var _this = this;
+        var field = _a.field, array = _a.array, execContext = _a.execContext;
         var missing = null;
         function handleMissing(childResult) {
             if (childResult.missing) {
@@ -1933,12 +2233,16 @@ var StoreReader = (function () {
             }
             return childResult.result;
         }
-        result = result.map(function (item) {
+        array = array.map(function (item) {
             if (item === null) {
                 return null;
             }
             if (Array.isArray(item)) {
-                return handleMissing(_this.executeSubSelectedArray(field, item, execContext));
+                return handleMissing(_this.executeSubSelectedArray({
+                    field: field,
+                    array: item,
+                    execContext: execContext,
+                }));
             }
             if (field.selectionSet) {
                 return handleMissing(_this.executeSelectionSet({
@@ -1950,7 +2254,10 @@ var StoreReader = (function () {
             assertSelectionSetForIdValue(field, item);
             return item;
         });
-        return { result: result, missing: missing };
+        if (this.freezeResults && "development" !== 'production') {
+            Object.freeze(array);
+        }
+        return { result: array, missing: missing };
     };
     return StoreReader;
 }());
@@ -2097,6 +2404,7 @@ var StoreWriter = (function () {
         var result = _a.result, dataId = _a.dataId, selectionSet = _a.selectionSet, context = _a.context;
         var variables = context.variables, store = context.store, fragmentMap = context.fragmentMap;
         selectionSet.selections.forEach(function (selection) {
+            var _a;
             if (!Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_2__["shouldInclude"])(selection, variables)) {
                 return;
             }
@@ -2134,9 +2442,10 @@ var StoreWriter = (function () {
                 }
                 var matches = true;
                 if (context.fragmentMatcherFunction && fragment.typeCondition) {
-                    var idValue = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_2__["toIdValue"])({ id: 'self', typename: undefined });
+                    var id = dataId || 'self';
+                    var idValue = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_2__["toIdValue"])({ id: id, typename: undefined });
                     var fakeContext = {
-                        store: new ObjectCache({ self: result }),
+                        store: new ObjectCache((_a = {}, _a[id] = result, _a)),
                         cacheRedirects: {},
                     };
                     var match = context.fragmentMatcherFunction(idValue, fragment.typeCondition.name.value, fakeContext);
@@ -2158,8 +2467,8 @@ var StoreWriter = (function () {
         return store;
     };
     StoreWriter.prototype.writeFieldToStore = function (_a) {
-        var field = _a.field, value = _a.value, dataId = _a.dataId, context = _a.context;
         var _b;
+        var field = _a.field, value = _a.value, dataId = _a.dataId, context = _a.context;
         var variables = context.variables, dataIdFromObject = context.dataIdFromObject, store = context.store;
         var storeValue;
         var storeObject;
@@ -2309,6 +2618,7 @@ var defaultConfig = {
     dataIdFromObject: defaultDataIdFromObject,
     addTypename: true,
     resultCaching: true,
+    freezeResults: false,
 };
 function defaultDataIdFromObject(result) {
     if (result.__typename) {
@@ -2348,7 +2658,7 @@ var InMemoryCache = (function (_super) {
         var _this = _super.call(this) || this;
         _this.watches = new Set();
         _this.typenameDocumentCache = new Map();
-        _this.cacheKeyRoot = new CacheKeyNode();
+        _this.cacheKeyRoot = new optimism__WEBPACK_IMPORTED_MODULE_3__["KeyTrie"](apollo_utilities__WEBPACK_IMPORTED_MODULE_2__["canUseWeakMap"]);
         _this.silenceBroadcast = false;
         _this.config = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, defaultConfig, config);
         if (_this.config.customResolvers) {
@@ -2364,8 +2674,11 @@ var InMemoryCache = (function (_super) {
             ? new DepTrackingCache()
             : new ObjectCache();
         _this.optimisticData = _this.data;
-        _this.storeReader = new StoreReader(_this.cacheKeyRoot);
         _this.storeWriter = new StoreWriter();
+        _this.storeReader = new StoreReader({
+            cacheKeyRoot: _this.cacheKeyRoot,
+            freezeResults: config.freezeResults,
+        });
         var cache = _this;
         var maybeBroadcastWatch = cache.maybeBroadcastWatch;
         _this.maybeBroadcastWatch = Object(optimism__WEBPACK_IMPORTED_MODULE_3__["wrap"])(function (c) {
@@ -2717,25 +3030,23 @@ var Cache;
 /*!**************************************************!*\
   !*** ./node_modules/apollo-client/bundle.esm.js ***!
   \**************************************************/
-/*! exports provided: default, ApolloClient, ObservableQuery, NetworkStatus, isApolloError, ApolloError, FetchType */
+/*! exports provided: default, ApolloClient, ApolloError, FetchType, NetworkStatus, ObservableQuery, isApolloError */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ApolloClient", function() { return ApolloClient; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ObservableQuery", function() { return ObservableQuery; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "NetworkStatus", function() { return NetworkStatus; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isApolloError", function() { return isApolloError; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ApolloError", function() { return ApolloError; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "FetchType", function() { return FetchType; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "NetworkStatus", function() { return NetworkStatus; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ObservableQuery", function() { return ObservableQuery; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isApolloError", function() { return isApolloError; });
 /* harmony import */ var tslib__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.js");
 /* harmony import */ var apollo_utilities__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! apollo-utilities */ "./node_modules/apollo-utilities/lib/bundle.esm.js");
 /* harmony import */ var apollo_link__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! apollo-link */ "./node_modules/apollo-link/lib/bundle.esm.js");
 /* harmony import */ var symbol_observable__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! symbol-observable */ "./node_modules/symbol-observable/es/index.js");
 /* harmony import */ var ts_invariant__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ts-invariant */ "./node_modules/ts-invariant/lib/invariant.esm.js");
-/* harmony import */ var apollo_link_dedup__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! apollo-link-dedup */ "./node_modules/apollo-link-dedup/lib/bundle.esm.js");
-/* harmony import */ var graphql_language_visitor__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! graphql/language/visitor */ "./node_modules/graphql/language/visitor.mjs");
-
+/* harmony import */ var graphql_language_visitor__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! graphql/language/visitor */ "./node_modules/graphql/language/visitor.mjs");
 
 
 
@@ -2771,12 +3082,16 @@ var Observable = (function (_super) {
     return Observable;
 }(apollo_link__WEBPACK_IMPORTED_MODULE_2__["Observable"]));
 
+function isNonEmptyArray(value) {
+    return Array.isArray(value) && value.length > 0;
+}
+
 function isApolloError(err) {
     return err.hasOwnProperty('graphQLErrors');
 }
 var generateErrorMessage = function (err) {
     var message = '';
-    if (Array.isArray(err.graphQLErrors) && err.graphQLErrors.length !== 0) {
+    if (isNonEmptyArray(err.graphQLErrors)) {
         err.graphQLErrors.forEach(function (graphQLError) {
             var errorMessage = graphQLError
                 ? graphQLError.message
@@ -2819,11 +3134,8 @@ var FetchType;
 
 var hasError = function (storeValue, policy) {
     if (policy === void 0) { policy = 'none'; }
-    return storeValue &&
-        ((storeValue.graphQLErrors &&
-            storeValue.graphQLErrors.length > 0 &&
-            policy === 'none') ||
-            storeValue.networkError);
+    return storeValue && (storeValue.networkError ||
+        (policy === 'none' && isNonEmptyArray(storeValue.graphQLErrors)));
 };
 var ObservableQuery = (function (_super) {
     Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__extends"])(ObservableQuery, _super);
@@ -2832,35 +3144,35 @@ var ObservableQuery = (function (_super) {
         var _this = _super.call(this, function (observer) {
             return _this.onSubscribe(observer);
         }) || this;
+        _this.observers = new Set();
+        _this.subscriptions = new Set();
         _this.isTornDown = false;
         _this.options = options;
         _this.variables = options.variables || {};
         _this.queryId = queryManager.generateQueryId();
         _this.shouldSubscribe = shouldSubscribe;
+        var opDef = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["getOperationDefinition"])(options.query);
+        _this.queryName = opDef && opDef.name && opDef.name.value;
         _this.queryManager = queryManager;
-        _this.observers = [];
-        _this.subscriptionHandles = [];
         return _this;
     }
     ObservableQuery.prototype.result = function () {
-        var that = this;
+        var _this = this;
         return new Promise(function (resolve, reject) {
-            var subscription;
             var observer = {
                 next: function (result) {
                     resolve(result);
-                    if (!that.observers.some(function (obs) { return obs !== observer; })) {
-                        that.queryManager.removeQuery(that.queryId);
+                    _this.observers.delete(observer);
+                    if (!_this.observers.size) {
+                        _this.queryManager.removeQuery(_this.queryId);
                     }
                     setTimeout(function () {
                         subscription.unsubscribe();
                     }, 0);
                 },
-                error: function (error) {
-                    reject(error);
-                },
+                error: reject,
             };
-            subscription = that.subscribe(observer);
+            var subscription = _this.subscribe(observer);
         });
     };
     ObservableQuery.prototype.currentResult = function () {
@@ -2872,57 +3184,57 @@ var ObservableQuery = (function (_super) {
     };
     ObservableQuery.prototype.getCurrentResult = function () {
         if (this.isTornDown) {
+            var lastResult = this.lastResult;
             return {
-                data: this.lastError
-                    ? undefined
-                    : this.lastResult
-                        ? this.lastResult.data
-                        : undefined,
+                data: !this.lastError && lastResult && lastResult.data || void 0,
                 error: this.lastError,
                 loading: false,
                 networkStatus: NetworkStatus.error,
             };
         }
-        var queryStoreValue = this.queryManager.queryStore.get(this.queryId);
-        if (hasError(queryStoreValue, this.options.errorPolicy)) {
-            return {
-                data: undefined,
-                loading: false,
-                networkStatus: queryStoreValue.networkStatus,
-                error: new ApolloError({
-                    graphQLErrors: queryStoreValue.graphQLErrors,
-                    networkError: queryStoreValue.networkError,
-                }),
-            };
-        }
-        if (queryStoreValue && queryStoreValue.variables) {
-            this.options.variables = Object.assign({}, this.options.variables, queryStoreValue.variables);
-        }
         var _a = this.queryManager.getCurrentQueryResult(this), data = _a.data, partial = _a.partial;
-        var queryLoading = !queryStoreValue ||
-            queryStoreValue.networkStatus === NetworkStatus.loading;
-        var loading = (this.options.fetchPolicy === 'network-only' && queryLoading) ||
-            (partial && this.options.fetchPolicy !== 'cache-only');
-        var networkStatus;
+        var queryStoreValue = this.queryManager.queryStore.get(this.queryId);
+        var result;
+        var fetchPolicy = this.options.fetchPolicy;
+        var isNetworkFetchPolicy = fetchPolicy === 'network-only' ||
+            fetchPolicy === 'no-cache';
         if (queryStoreValue) {
-            networkStatus = queryStoreValue.networkStatus;
+            var networkStatus = queryStoreValue.networkStatus;
+            if (hasError(queryStoreValue, this.options.errorPolicy)) {
+                return {
+                    data: void 0,
+                    loading: false,
+                    networkStatus: networkStatus,
+                    error: new ApolloError({
+                        graphQLErrors: queryStoreValue.graphQLErrors,
+                        networkError: queryStoreValue.networkError,
+                    }),
+                };
+            }
+            if (queryStoreValue.variables) {
+                this.options.variables = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, this.options.variables, queryStoreValue.variables);
+                this.variables = this.options.variables;
+            }
+            result = {
+                data: data,
+                loading: isNetworkRequestInFlight(networkStatus),
+                networkStatus: networkStatus,
+            };
+            if (queryStoreValue.graphQLErrors && this.options.errorPolicy === 'all') {
+                result.errors = queryStoreValue.graphQLErrors;
+            }
         }
         else {
-            networkStatus = loading ? NetworkStatus.loading : NetworkStatus.ready;
-        }
-        var result = {
-            data: data,
-            loading: isNetworkRequestInFlight(networkStatus),
-            networkStatus: networkStatus,
-        };
-        if (queryStoreValue &&
-            queryStoreValue.graphQLErrors &&
-            this.options.errorPolicy === 'all') {
-            result.errors = queryStoreValue.graphQLErrors;
+            var loading = isNetworkFetchPolicy ||
+                (partial && fetchPolicy !== 'cache-only');
+            result = {
+                data: data,
+                loading: loading,
+                networkStatus: loading ? NetworkStatus.loading : NetworkStatus.ready,
+            };
         }
         if (!partial) {
-            this.lastResult = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, result, { stale: false });
-            this.lastResultSnapshot = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["cloneDeep"])(this.lastResult);
+            this.updateLastResult(Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, result, { stale: false }));
         }
         return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, result, { partial: partial });
     };
@@ -2949,36 +3261,27 @@ var ObservableQuery = (function (_super) {
     ObservableQuery.prototype.refetch = function (variables) {
         var fetchPolicy = this.options.fetchPolicy;
         if (fetchPolicy === 'cache-only') {
-            return Promise.reject(new Error('cache-only fetchPolicy option should not be used together with query refetch.'));
+            return Promise.reject( false ? undefined : new ts_invariant__WEBPACK_IMPORTED_MODULE_4__["InvariantError"]('cache-only fetchPolicy option should not be used together with query refetch.'));
+        }
+        if (fetchPolicy !== 'no-cache' &&
+            fetchPolicy !== 'cache-and-network') {
+            fetchPolicy = 'network-only';
         }
         if (!Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["isEqual"])(this.variables, variables)) {
-            this.variables = Object.assign({}, this.variables, variables);
+            this.variables = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, this.variables, variables);
         }
         if (!Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["isEqual"])(this.options.variables, this.variables)) {
-            this.options.variables = Object.assign({}, this.options.variables, this.variables);
+            this.options.variables = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, this.options.variables, this.variables);
         }
-        var isNetworkFetchPolicy = fetchPolicy === 'network-only' || fetchPolicy === 'no-cache';
-        var combinedOptions = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, this.options, { fetchPolicy: isNetworkFetchPolicy ? fetchPolicy : 'network-only' });
-        return this.queryManager
-            .fetchQuery(this.queryId, combinedOptions, FetchType.refetch)
-            .then(function (result) { return result; });
+        return this.queryManager.fetchQuery(this.queryId, Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, this.options, { fetchPolicy: fetchPolicy }), FetchType.refetch);
     };
     ObservableQuery.prototype.fetchMore = function (fetchMoreOptions) {
         var _this = this;
          false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"])(fetchMoreOptions.updateQuery, 'updateQuery option is required. This function defines how to update the query data with the new results.');
-        var combinedOptions;
-        return Promise.resolve()
-            .then(function () {
-            var qid = _this.queryManager.generateQueryId();
-            if (fetchMoreOptions.query) {
-                combinedOptions = fetchMoreOptions;
-            }
-            else {
-                combinedOptions = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, _this.options, fetchMoreOptions, { variables: Object.assign({}, _this.variables, fetchMoreOptions.variables) });
-            }
-            combinedOptions.fetchPolicy = 'network-only';
-            return _this.queryManager.fetchQuery(qid, combinedOptions, FetchType.normal, _this.queryId);
-        })
+        var combinedOptions = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, (fetchMoreOptions.query ? fetchMoreOptions : Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, this.options, fetchMoreOptions, { variables: Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, this.variables, fetchMoreOptions.variables) })), { fetchPolicy: 'network-only' });
+        var qid = this.queryManager.generateQueryId();
+        return this.queryManager
+            .fetchQuery(qid, combinedOptions, FetchType.normal, this.queryId)
             .then(function (fetchMoreResult) {
             _this.updateQuery(function (previousResult) {
                 return fetchMoreOptions.updateQuery(previousResult, {
@@ -2986,7 +3289,11 @@ var ObservableQuery = (function (_super) {
                     variables: combinedOptions.variables,
                 });
             });
+            _this.queryManager.stopQuery(qid);
             return fetchMoreResult;
+        }, function (error) {
+            _this.queryManager.stopQuery(qid);
+            throw error;
         });
     };
     ObservableQuery.prototype.subscribeToMore = function (options) {
@@ -2998,10 +3305,11 @@ var ObservableQuery = (function (_super) {
         })
             .subscribe({
             next: function (subscriptionData) {
-                if (options.updateQuery) {
+                var updateQuery = options.updateQuery;
+                if (updateQuery) {
                     _this.updateQuery(function (previous, _a) {
                         var variables = _a.variables;
-                        return options.updateQuery(previous, {
+                        return updateQuery(previous, {
                             subscriptionData: subscriptionData,
                             variables: variables,
                         });
@@ -3013,66 +3321,55 @@ var ObservableQuery = (function (_super) {
                     options.onError(err);
                     return;
                 }
-                console.error('Unhandled GraphQL subscription error', err);
+                 false || ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"].error('Unhandled GraphQL subscription error', err);
             },
         });
-        this.subscriptionHandles.push(subscription);
+        this.subscriptions.add(subscription);
         return function () {
-            var i = _this.subscriptionHandles.indexOf(subscription);
-            if (i >= 0) {
-                _this.subscriptionHandles.splice(i, 1);
+            if (_this.subscriptions.delete(subscription)) {
                 subscription.unsubscribe();
             }
         };
     };
     ObservableQuery.prototype.setOptions = function (opts) {
-        var oldOptions = this.options;
-        this.options = Object.assign({}, this.options, opts);
+        var oldFetchPolicy = this.options.fetchPolicy;
+        this.options = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, this.options, opts);
         if (opts.pollInterval) {
             this.startPolling(opts.pollInterval);
         }
         else if (opts.pollInterval === 0) {
             this.stopPolling();
         }
-        var tryFetch = (oldOptions.fetchPolicy !== 'network-only' &&
-            opts.fetchPolicy === 'network-only') ||
-            (oldOptions.fetchPolicy === 'cache-only' &&
-                opts.fetchPolicy !== 'cache-only') ||
-            (oldOptions.fetchPolicy === 'standby' &&
-                opts.fetchPolicy !== 'standby') ||
-            false;
-        return this.setVariables(this.options.variables, tryFetch, opts.fetchResults);
+        var fetchPolicy = opts.fetchPolicy;
+        return this.setVariables(this.options.variables, oldFetchPolicy !== fetchPolicy && (oldFetchPolicy === 'cache-only' ||
+            oldFetchPolicy === 'standby' ||
+            fetchPolicy === 'network-only'), opts.fetchResults);
     };
     ObservableQuery.prototype.setVariables = function (variables, tryFetch, fetchResults) {
         if (tryFetch === void 0) { tryFetch = false; }
         if (fetchResults === void 0) { fetchResults = true; }
         this.isTornDown = false;
-        var newVariables = variables ? variables : this.variables;
-        if (Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["isEqual"])(newVariables, this.variables) && !tryFetch) {
-            if (this.observers.length === 0 || !fetchResults) {
-                return new Promise(function (resolve) { return resolve(); });
-            }
-            return this.result();
+        variables = variables || this.variables;
+        if (!tryFetch && Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["isEqual"])(variables, this.variables)) {
+            return this.observers.size && fetchResults
+                ? this.result()
+                : Promise.resolve();
         }
-        else {
-            this.variables = newVariables;
-            this.options.variables = newVariables;
-            if (this.observers.length === 0) {
-                return new Promise(function (resolve) { return resolve(); });
-            }
-            return this.queryManager
-                .fetchQuery(this.queryId, Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, this.options, { variables: this.variables }))
-                .then(function (result) { return result; });
+        this.variables = this.options.variables = variables;
+        if (!this.observers.size) {
+            return Promise.resolve();
         }
+        return this.queryManager.fetchQuery(this.queryId, this.options);
     };
     ObservableQuery.prototype.updateQuery = function (mapFn) {
-        var _a = this.queryManager.getQueryWithPreviousResult(this.queryId), previousResult = _a.previousResult, variables = _a.variables, document = _a.document;
+        var queryManager = this.queryManager;
+        var _a = queryManager.getQueryWithPreviousResult(this.queryId), previousResult = _a.previousResult, variables = _a.variables, document = _a.document;
         var newResult = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["tryFunctionOrLogError"])(function () {
             return mapFn(previousResult, { variables: variables });
         });
         if (newResult) {
-            this.queryManager.dataStore.markUpdateQueryResult(document, variables, newResult);
-            this.queryManager.broadcastQueries();
+            queryManager.dataStore.markUpdateQueryResult(document, variables, newResult);
+            queryManager.broadcastQueries();
         }
     };
     ObservableQuery.prototype.stopPolling = function () {
@@ -3084,62 +3381,100 @@ var ObservableQuery = (function (_super) {
         this.options.pollInterval = pollInterval;
         this.queryManager.startPollingQuery(this.options, this.queryId);
     };
+    ObservableQuery.prototype.updateLastResult = function (newResult) {
+        var previousResult = this.lastResult;
+        this.lastResult = newResult;
+        this.lastResultSnapshot = this.queryManager.assumeImmutableResults
+            ? newResult
+            : Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["cloneDeep"])(newResult);
+        return previousResult;
+    };
     ObservableQuery.prototype.onSubscribe = function (observer) {
         var _this = this;
-        if (observer._subscription &&
-            observer._subscription._observer &&
-            !observer._subscription._observer.error) {
-            observer._subscription._observer.error = function (error) {
-                console.error('Unhandled error', error.message, error.stack);
-            };
+        try {
+            var subObserver = observer._subscription._observer;
+            if (subObserver && !subObserver.error) {
+                subObserver.error = defaultSubscriptionObserverErrorCallback;
+            }
         }
-        this.observers.push(observer);
+        catch (_a) { }
+        var first = !this.observers.size;
+        this.observers.add(observer);
         if (observer.next && this.lastResult)
             observer.next(this.lastResult);
         if (observer.error && this.lastError)
             observer.error(this.lastError);
-        if (this.observers.length === 1)
+        if (first) {
             this.setUpQuery();
+        }
         return function () {
-            _this.observers = _this.observers.filter(function (obs) { return obs !== observer; });
-            if (_this.observers.length === 0) {
+            if (_this.observers.delete(observer) && !_this.observers.size) {
                 _this.tearDownQuery();
             }
         };
     };
     ObservableQuery.prototype.setUpQuery = function () {
         var _this = this;
+        var _a = this, queryManager = _a.queryManager, queryId = _a.queryId;
         if (this.shouldSubscribe) {
-            this.queryManager.addObservableQuery(this.queryId, this);
+            queryManager.addObservableQuery(queryId, this);
         }
-        if (!!this.options.pollInterval) {
+        if (this.options.pollInterval) {
             assertNotCacheFirstOrOnly(this);
-            this.queryManager.startPollingQuery(this.options, this.queryId);
+            queryManager.startPollingQuery(this.options, queryId);
         }
-        var observer = {
-            next: function (result) {
-                _this.lastResult = result;
-                _this.lastResultSnapshot = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["cloneDeep"])(result);
-                _this.observers.forEach(function (obs) { return obs.next && obs.next(result); });
-            },
-            error: function (error) {
-                _this.lastError = error;
-                _this.observers.forEach(function (obs) { return obs.error && obs.error(error); });
-            },
+        var onError = function (error) {
+            iterateObserversSafely(_this.observers, 'error', _this.lastError = error);
         };
-        this.queryManager.startQuery(this.queryId, this.options, this.queryManager.queryListenerForObserver(this.queryId, this.options, observer));
+        queryManager.observeQuery(queryId, this.options, {
+            next: function (result) {
+                if (_this.lastError || _this.isDifferentFromLastResult(result)) {
+                    var previousResult_1 = _this.updateLastResult(result);
+                    var _a = _this.options, query_1 = _a.query, variables = _a.variables, fetchPolicy_1 = _a.fetchPolicy;
+                    if (queryManager.transform(query_1).hasClientExports) {
+                        queryManager.getLocalState().addExportedVariables(query_1, variables).then(function (variables) {
+                            var previousVariables = _this.variables;
+                            _this.variables = _this.options.variables = variables;
+                            if (!result.loading &&
+                                previousResult_1 &&
+                                fetchPolicy_1 !== 'cache-only' &&
+                                queryManager.transform(query_1).serverQuery &&
+                                !Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["isEqual"])(previousVariables, variables)) {
+                                _this.refetch();
+                            }
+                            else {
+                                iterateObserversSafely(_this.observers, 'next', result);
+                            }
+                        });
+                    }
+                    else {
+                        iterateObserversSafely(_this.observers, 'next', result);
+                    }
+                }
+            },
+            error: onError,
+        }).catch(onError);
     };
     ObservableQuery.prototype.tearDownQuery = function () {
+        var queryManager = this.queryManager;
         this.isTornDown = true;
-        this.queryManager.stopPollingQuery(this.queryId);
-        this.subscriptionHandles.forEach(function (sub) { return sub.unsubscribe(); });
-        this.subscriptionHandles = [];
-        this.queryManager.removeObservableQuery(this.queryId);
-        this.queryManager.stopQuery(this.queryId);
-        this.observers = [];
+        queryManager.stopPollingQuery(this.queryId);
+        this.subscriptions.forEach(function (sub) { return sub.unsubscribe(); });
+        this.subscriptions.clear();
+        queryManager.removeObservableQuery(this.queryId);
+        queryManager.stopQuery(this.queryId);
+        this.observers.clear();
     };
     return ObservableQuery;
 }(Observable));
+function defaultSubscriptionObserverErrorCallback(error) {
+     false || ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"].error('Unhandled error', error.message, error.stack);
+}
+function iterateObserversSafely(observers, method, argument) {
+    var observersWithMethod = [];
+    observers.forEach(function (obs) { return obs[method] && observersWithMethod.push(obs); });
+    observersWithMethod.forEach(function (obs) { return obs[method](argument); });
+}
 function assertNotCacheFirstOrOnly(obsQuery) {
     var fetchPolicy = obsQuery.options.fetchPolicy;
      false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"])(fetchPolicy !== 'cache-first' && fetchPolicy !== 'cache-only', 'Queries that specify the cache-first and cache-only fetchPolicies cannot also be polling queries.');
@@ -3165,19 +3500,17 @@ var MutationStore = (function () {
     };
     MutationStore.prototype.markMutationError = function (mutationId, error) {
         var mutation = this.store[mutationId];
-        if (!mutation) {
-            return;
+        if (mutation) {
+            mutation.loading = false;
+            mutation.error = error;
         }
-        mutation.loading = false;
-        mutation.error = error;
     };
     MutationStore.prototype.markMutationResult = function (mutationId) {
         var mutation = this.store[mutationId];
-        if (!mutation) {
-            return;
+        if (mutation) {
+            mutation.loading = false;
+            mutation.error = null;
         }
-        mutation.loading = false;
-        mutation.error = null;
     };
     MutationStore.prototype.reset = function () {
         this.store = {};
@@ -3197,11 +3530,9 @@ var QueryStore = (function () {
     };
     QueryStore.prototype.initQuery = function (query) {
         var previousQuery = this.store[query.queryId];
-        if (previousQuery &&
-            previousQuery.document !== query.document &&
-            !Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["isEqual"])(previousQuery.document, query.document)) {
-            throw  false ? undefined : new ts_invariant__WEBPACK_IMPORTED_MODULE_4__["InvariantError"]('Internal Error: may not update existing query string in store');
-        }
+         false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"])(!previousQuery ||
+            previousQuery.document === query.document ||
+            Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["isEqual"])(previousQuery.document, query.document), 'Internal Error: may not update existing query string in store');
         var isSetVariables = false;
         var previousVariables = null;
         if (query.storePreviousVariables &&
@@ -3248,8 +3579,7 @@ var QueryStore = (function () {
         if (!this.store || !this.store[queryId])
             return;
         this.store[queryId].networkError = null;
-        this.store[queryId].graphQLErrors =
-            result.errors && result.errors.length ? result.errors : [];
+        this.store[queryId].graphQLErrors = isNonEmptyArray(result.errors) ? result.errors : [];
         this.store[queryId].previousVariables = null;
         this.store[queryId].networkStatus = NetworkStatus.ready;
         if (typeof fetchMoreForQueryId === 'string' &&
@@ -3267,27 +3597,28 @@ var QueryStore = (function () {
         }
     };
     QueryStore.prototype.markQueryResultClient = function (queryId, complete) {
-        if (!this.store || !this.store[queryId])
-            return;
-        this.store[queryId].networkError = null;
-        this.store[queryId].previousVariables = null;
-        this.store[queryId].networkStatus = complete
-            ? NetworkStatus.ready
-            : NetworkStatus.loading;
+        var storeValue = this.store && this.store[queryId];
+        if (storeValue) {
+            storeValue.networkError = null;
+            storeValue.previousVariables = null;
+            if (complete) {
+                storeValue.networkStatus = NetworkStatus.ready;
+            }
+        }
     };
     QueryStore.prototype.stopQuery = function (queryId) {
         delete this.store[queryId];
     };
     QueryStore.prototype.reset = function (observableQueryIds) {
         var _this = this;
-        this.store = Object.keys(this.store)
-            .filter(function (queryId) {
-            return observableQueryIds.indexOf(queryId) > -1;
-        })
-            .reduce(function (res, key) {
-            res[key] = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, _this.store[key], { networkStatus: NetworkStatus.loading });
-            return res;
-        }, {});
+        Object.keys(this.store).forEach(function (queryId) {
+            if (observableQueryIds.indexOf(queryId) < 0) {
+                _this.stopQuery(queryId);
+            }
+            else {
+                _this.store[queryId].networkStatus = NetworkStatus.loading;
+            }
+        });
     };
     return QueryStore;
 }());
@@ -3351,8 +3682,10 @@ var LocalState = (function () {
             if (this.resolvers) {
                 return document;
             }
-             false || ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"].warn('Found @client directives in query but no client resolvers were specified. ' +
-                'You can now pass apollo-link-state resolvers to the ApolloClient constructor.');
+             false || ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"].warn('Found @client directives in a query but no ApolloClient resolvers ' +
+                'were specified. This means ApolloClient local resolver handling ' +
+                'has been disabled, and @client directives will be passed through ' +
+                'to your link chain.');
         }
         return null;
     };
@@ -3387,7 +3720,7 @@ var LocalState = (function () {
     };
     LocalState.prototype.shouldForceResolvers = function (document) {
         var forceResolvers = false;
-        Object(graphql_language_visitor__WEBPACK_IMPORTED_MODULE_6__["visit"])(document, {
+        Object(graphql_language_visitor__WEBPACK_IMPORTED_MODULE_5__["visit"])(document, {
             Directive: {
                 enter: function (node) {
                     if (node.name.value === 'client' && node.arguments) {
@@ -3397,7 +3730,7 @@ var LocalState = (function () {
                                 arg.value.value === true;
                         });
                         if (forceResolvers) {
-                            return graphql_language_visitor__WEBPACK_IMPORTED_MODULE_6__["BREAK"];
+                            return graphql_language_visitor__WEBPACK_IMPORTED_MODULE_5__["BREAK"];
                         }
                     }
                 },
@@ -3405,13 +3738,11 @@ var LocalState = (function () {
         });
         return forceResolvers;
     };
-    LocalState.prototype.shouldForceResolver = function (field) {
-        return this.shouldForceResolvers(field);
-    };
     LocalState.prototype.buildRootValueFromCache = function (document, variables) {
         return this.cache.diff({
             query: Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["buildQueryFromSelectionSet"])(document),
             variables: variables,
+            returnPartialData: true,
             optimistic: false,
         }).result;
     };
@@ -3508,7 +3839,7 @@ var LocalState = (function () {
                 defaultResult = rootValue[aliasedFieldName] || rootValue[fieldName];
                 resultPromise = Promise.resolve(defaultResult);
                 if (!execContext.onlyRunForcedResolvers ||
-                    this.shouldForceResolver(field)) {
+                    this.shouldForceResolvers(field)) {
                     resolverType = rootValue.__typename || execContext.defaultOperationType;
                     resolverMap = this.resolvers && this.resolvers[resolverType];
                     if (resolverMap) {
@@ -3564,26 +3895,85 @@ var LocalState = (function () {
     return LocalState;
 }());
 
+function multiplex(inner) {
+    var observers = new Set();
+    var sub = null;
+    return new Observable(function (observer) {
+        observers.add(observer);
+        sub = sub || inner.subscribe({
+            next: function (value) {
+                observers.forEach(function (obs) { return obs.next && obs.next(value); });
+            },
+            error: function (error) {
+                observers.forEach(function (obs) { return obs.error && obs.error(error); });
+            },
+            complete: function () {
+                observers.forEach(function (obs) { return obs.complete && obs.complete(); });
+            },
+        });
+        return function () {
+            if (observers.delete(observer) && !observers.size && sub) {
+                sub.unsubscribe();
+                sub = null;
+            }
+        };
+    });
+}
+function asyncMap(observable, mapFn) {
+    return new Observable(function (observer) {
+        var next = observer.next, error = observer.error, complete = observer.complete;
+        var activeNextCount = 0;
+        var completed = false;
+        var handler = {
+            next: function (value) {
+                ++activeNextCount;
+                new Promise(function (resolve) {
+                    resolve(mapFn(value));
+                }).then(function (result) {
+                    --activeNextCount;
+                    next && next.call(observer, result);
+                    completed && handler.complete();
+                }, function (e) {
+                    --activeNextCount;
+                    error && error.call(observer, e);
+                });
+            },
+            error: function (e) {
+                error && error.call(observer, e);
+            },
+            complete: function () {
+                completed = true;
+                if (!activeNextCount) {
+                    complete && complete.call(observer);
+                }
+            },
+        };
+        var sub = observable.subscribe(handler);
+        return function () { return sub.unsubscribe(); };
+    });
+}
+
+var hasOwnProperty = Object.prototype.hasOwnProperty;
 var QueryManager = (function () {
     function QueryManager(_a) {
-        var link = _a.link, _b = _a.queryDeduplication, queryDeduplication = _b === void 0 ? false : _b, store = _a.store, _c = _a.onBroadcast, onBroadcast = _c === void 0 ? function () { return undefined; } : _c, _d = _a.ssrMode, ssrMode = _d === void 0 ? false : _d, _e = _a.clientAwareness, clientAwareness = _e === void 0 ? {} : _e, localState = _a.localState;
+        var link = _a.link, _b = _a.queryDeduplication, queryDeduplication = _b === void 0 ? false : _b, store = _a.store, _c = _a.onBroadcast, onBroadcast = _c === void 0 ? function () { return undefined; } : _c, _d = _a.ssrMode, ssrMode = _d === void 0 ? false : _d, _e = _a.clientAwareness, clientAwareness = _e === void 0 ? {} : _e, localState = _a.localState, assumeImmutableResults = _a.assumeImmutableResults;
         this.mutationStore = new MutationStore();
         this.queryStore = new QueryStore();
         this.clientAwareness = {};
         this.idCounter = 1;
         this.queries = new Map();
         this.fetchQueryRejectFns = new Map();
-        this.queryIdsByName = {};
+        this.transformCache = new (apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["canUseWeakMap"] ? WeakMap : Map)();
+        this.inFlightLinkObservables = new Map();
         this.pollingInfoByQueryId = new Map();
-        this.nextPoll = null;
         this.link = link;
-        this.deduplicator = apollo_link__WEBPACK_IMPORTED_MODULE_2__["ApolloLink"].from([new apollo_link_dedup__WEBPACK_IMPORTED_MODULE_5__["DedupLink"](), link]);
         this.queryDeduplication = queryDeduplication;
         this.dataStore = store;
         this.onBroadcast = onBroadcast;
         this.clientAwareness = clientAwareness;
         this.localState = localState || new LocalState({ cache: store.getCache() });
         this.ssrMode = ssrMode;
+        this.assumeImmutableResults = !!assumeImmutableResults;
     }
     QueryManager.prototype.stop = function () {
         var _this = this;
@@ -3591,173 +3981,83 @@ var QueryManager = (function () {
             _this.stopQueryNoBroadcast(queryId);
         });
         this.fetchQueryRejectFns.forEach(function (reject) {
-            reject(new Error('QueryManager stopped while query was in flight'));
+            reject( false ? undefined : new ts_invariant__WEBPACK_IMPORTED_MODULE_4__["InvariantError"]('QueryManager stopped while query was in flight'));
         });
     };
     QueryManager.prototype.mutate = function (_a) {
         var mutation = _a.mutation, variables = _a.variables, optimisticResponse = _a.optimisticResponse, updateQueriesByName = _a.updateQueries, _b = _a.refetchQueries, refetchQueries = _b === void 0 ? [] : _b, _c = _a.awaitRefetchQueries, awaitRefetchQueries = _c === void 0 ? false : _c, updateWithProxyFn = _a.update, _d = _a.errorPolicy, errorPolicy = _d === void 0 ? 'none' : _d, fetchPolicy = _a.fetchPolicy, _e = _a.context, context = _e === void 0 ? {} : _e;
         return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function () {
-            var mutationId, cache, generateUpdateQueriesInfo, updatedVariables, _f;
+            var mutationId, generateUpdateQueriesInfo, self;
             var _this = this;
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__generator"])(this, function (_g) {
-                switch (_g.label) {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__generator"])(this, function (_f) {
+                switch (_f.label) {
                     case 0:
                          false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"])(mutation, 'mutation option is required. You must specify your GraphQL document in the mutation option.');
                          false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"])(!fetchPolicy || fetchPolicy === 'no-cache', "fetchPolicy for mutations currently only supports the 'no-cache' policy");
                         mutationId = this.generateQueryId();
-                        cache = this.dataStore.getCache();
-                        (mutation = cache.transformDocument(mutation)),
-                            (variables = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["assign"])({}, Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["getDefaultValues"])(Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["getMutationDefinition"])(mutation)), variables));
+                        mutation = this.transform(mutation).document;
                         this.setQuery(mutationId, function () { return ({ document: mutation }); });
+                        variables = this.getVariables(mutation, variables);
+                        if (!this.transform(mutation).hasClientExports) return [3, 2];
+                        return [4, this.localState.addExportedVariables(mutation, variables, context)];
+                    case 1:
+                        variables = _f.sent();
+                        _f.label = 2;
+                    case 2:
                         generateUpdateQueriesInfo = function () {
                             var ret = {};
                             if (updateQueriesByName) {
-                                Object.keys(updateQueriesByName).forEach(function (queryName) {
-                                    return (_this.queryIdsByName[queryName] || []).forEach(function (queryId) {
-                                        ret[queryId] = {
-                                            updater: updateQueriesByName[queryName],
-                                            query: _this.queryStore.get(queryId),
-                                        };
-                                    });
+                                _this.queries.forEach(function (_a, queryId) {
+                                    var observableQuery = _a.observableQuery;
+                                    if (observableQuery) {
+                                        var queryName = observableQuery.queryName;
+                                        if (queryName &&
+                                            hasOwnProperty.call(updateQueriesByName, queryName)) {
+                                            ret[queryId] = {
+                                                updater: updateQueriesByName[queryName],
+                                                query: _this.queryStore.get(queryId),
+                                            };
+                                        }
+                                    }
                                 });
                             }
                             return ret;
                         };
-                        if (!Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["hasClientExports"])(mutation)) return [3, 2];
-                        return [4, this.localState.addExportedVariables(mutation, variables, context)];
-                    case 1:
-                        _f = _g.sent();
-                        return [3, 3];
-                    case 2:
-                        _f = variables;
-                        _g.label = 3;
-                    case 3:
-                        updatedVariables = _f;
-                        this.mutationStore.initMutation(mutationId, mutation, updatedVariables);
+                        this.mutationStore.initMutation(mutationId, mutation, variables);
                         this.dataStore.markMutationInit({
                             mutationId: mutationId,
                             document: mutation,
-                            variables: updatedVariables || {},
+                            variables: variables,
                             updateQueries: generateUpdateQueriesInfo(),
                             update: updateWithProxyFn,
                             optimisticResponse: optimisticResponse,
                         });
                         this.broadcastQueries();
+                        self = this;
                         return [2, new Promise(function (resolve, reject) {
                                 var storeResult;
                                 var error;
-                                var operation = _this.buildOperationForLink(mutation, updatedVariables, Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, context, { optimisticResponse: optimisticResponse }));
-                                var completeMutation = function () {
-                                    if (error) {
-                                        _this.mutationStore.markMutationError(mutationId, error);
-                                    }
-                                    _this.dataStore.markMutationComplete({
-                                        mutationId: mutationId,
-                                        optimisticResponse: optimisticResponse,
-                                    });
-                                    _this.broadcastQueries();
-                                    if (error) {
-                                        return Promise.reject(error);
-                                    }
-                                    if (typeof refetchQueries === 'function') {
-                                        refetchQueries = refetchQueries(storeResult);
-                                    }
-                                    var refetchQueryPromises = [];
-                                    for (var _i = 0, refetchQueries_1 = refetchQueries; _i < refetchQueries_1.length; _i++) {
-                                        var refetchQuery = refetchQueries_1[_i];
-                                        if (typeof refetchQuery === 'string') {
-                                            var promise = _this.refetchQueryByName(refetchQuery);
-                                            if (promise) {
-                                                refetchQueryPromises.push(promise);
-                                            }
-                                            continue;
+                                self.getObservableFromLink(mutation, Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, context, { optimisticResponse: optimisticResponse }), variables, false).subscribe({
+                                    next: function (result) {
+                                        if (Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["graphQLResultHasError"])(result) && errorPolicy === 'none') {
+                                            error = new ApolloError({
+                                                graphQLErrors: result.errors,
+                                            });
+                                            return;
                                         }
-                                        var queryOptions = {
-                                            query: refetchQuery.query,
-                                            variables: refetchQuery.variables,
-                                            fetchPolicy: 'network-only',
-                                        };
-                                        if (refetchQuery.context) {
-                                            queryOptions.context = refetchQuery.context;
+                                        self.mutationStore.markMutationResult(mutationId);
+                                        if (fetchPolicy !== 'no-cache') {
+                                            self.dataStore.markMutationResult({
+                                                mutationId: mutationId,
+                                                result: result,
+                                                document: mutation,
+                                                variables: variables,
+                                                updateQueries: generateUpdateQueriesInfo(),
+                                                update: updateWithProxyFn,
+                                            });
                                         }
-                                        refetchQueryPromises.push(_this.query(queryOptions));
-                                    }
-                                    return Promise.all(awaitRefetchQueries ? refetchQueryPromises : []).then(function () {
-                                        _this.setQuery(mutationId, function () { return ({ document: null }); });
-                                        if (errorPolicy === 'ignore' &&
-                                            storeResult &&
-                                            Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["graphQLResultHasError"])(storeResult)) {
-                                            delete storeResult.errors;
-                                        }
-                                        return storeResult;
-                                    });
-                                };
-                                var clientQuery = _this.localState.clientQuery(operation.query);
-                                var serverQuery = _this.localState.serverQuery(operation.query);
-                                if (serverQuery) {
-                                    operation.query = serverQuery;
-                                }
-                                var obs = serverQuery
-                                    ? Object(apollo_link__WEBPACK_IMPORTED_MODULE_2__["execute"])(_this.link, operation)
-                                    : Observable.of({
-                                        data: {},
-                                    });
-                                var self = _this;
-                                var complete = false;
-                                var handlingNext = false;
-                                obs.subscribe({
-                                    next: function (result) { return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this, void 0, void 0, function () {
-                                        var updatedResult, context, variables;
-                                        return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__generator"])(this, function (_a) {
-                                            switch (_a.label) {
-                                                case 0:
-                                                    handlingNext = true;
-                                                    if (Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["graphQLResultHasError"])(result) && errorPolicy === 'none') {
-                                                        handlingNext = false;
-                                                        error = new ApolloError({
-                                                            graphQLErrors: result.errors,
-                                                        });
-                                                        return [2];
-                                                    }
-                                                    self.mutationStore.markMutationResult(mutationId);
-                                                    updatedResult = result;
-                                                    context = operation.context, variables = operation.variables;
-                                                    if (!(clientQuery && Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["hasDirectives"])(['client'], clientQuery))) return [3, 2];
-                                                    return [4, self.localState
-                                                            .runResolvers({
-                                                            document: clientQuery,
-                                                            remoteResult: result,
-                                                            context: context,
-                                                            variables: variables,
-                                                        })
-                                                            .catch(function (error) {
-                                                            handlingNext = false;
-                                                            reject(error);
-                                                            return result;
-                                                        })];
-                                                case 1:
-                                                    updatedResult = _a.sent();
-                                                    _a.label = 2;
-                                                case 2:
-                                                    if (fetchPolicy !== 'no-cache') {
-                                                        self.dataStore.markMutationResult({
-                                                            mutationId: mutationId,
-                                                            result: updatedResult,
-                                                            document: mutation,
-                                                            variables: updatedVariables || {},
-                                                            updateQueries: generateUpdateQueriesInfo(),
-                                                            update: updateWithProxyFn,
-                                                        });
-                                                    }
-                                                    storeResult = updatedResult;
-                                                    handlingNext = false;
-                                                    if (complete) {
-                                                        completeMutation().then(resolve, reject);
-                                                    }
-                                                    return [2];
-                                            }
-                                        });
-                                    }); },
+                                        storeResult = result;
+                                    },
                                     error: function (err) {
                                         self.mutationStore.markMutationError(mutationId, err);
                                         self.dataStore.markMutationComplete({
@@ -3771,10 +4071,55 @@ var QueryManager = (function () {
                                         }));
                                     },
                                     complete: function () {
-                                        if (!handlingNext) {
-                                            completeMutation().then(resolve, reject);
+                                        if (error) {
+                                            self.mutationStore.markMutationError(mutationId, error);
                                         }
-                                        complete = true;
+                                        self.dataStore.markMutationComplete({
+                                            mutationId: mutationId,
+                                            optimisticResponse: optimisticResponse,
+                                        });
+                                        self.broadcastQueries();
+                                        if (error) {
+                                            reject(error);
+                                            return;
+                                        }
+                                        if (typeof refetchQueries === 'function') {
+                                            refetchQueries = refetchQueries(storeResult);
+                                        }
+                                        var refetchQueryPromises = [];
+                                        if (isNonEmptyArray(refetchQueries)) {
+                                            refetchQueries.forEach(function (refetchQuery) {
+                                                if (typeof refetchQuery === 'string') {
+                                                    self.queries.forEach(function (_a) {
+                                                        var observableQuery = _a.observableQuery;
+                                                        if (observableQuery &&
+                                                            observableQuery.queryName === refetchQuery) {
+                                                            refetchQueryPromises.push(observableQuery.refetch());
+                                                        }
+                                                    });
+                                                }
+                                                else {
+                                                    var queryOptions = {
+                                                        query: refetchQuery.query,
+                                                        variables: refetchQuery.variables,
+                                                        fetchPolicy: 'network-only',
+                                                    };
+                                                    if (refetchQuery.context) {
+                                                        queryOptions.context = refetchQuery.context;
+                                                    }
+                                                    refetchQueryPromises.push(self.query(queryOptions));
+                                                }
+                                            });
+                                        }
+                                        Promise.all(awaitRefetchQueries ? refetchQueryPromises : []).then(function () {
+                                            self.setQuery(mutationId, function () { return ({ document: null }); });
+                                            if (errorPolicy === 'ignore' &&
+                                                storeResult &&
+                                                Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["graphQLResultHasError"])(storeResult)) {
+                                                delete storeResult.errors;
+                                            }
+                                            resolve(storeResult);
+                                        });
                                     },
                                 });
                             })];
@@ -3784,83 +4129,74 @@ var QueryManager = (function () {
     };
     QueryManager.prototype.fetchQuery = function (queryId, options, fetchType, fetchMoreForQueryId) {
         return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function () {
-            var _a, variables, _b, metadata, _c, fetchPolicy, _d, context, cache, query, updatedVariables, _e, updatedOptions, storeResult, needToFetch, _f, complete, result, shouldFetch, requestId, cancel, shouldDispatchClientResult, networkResult;
+            var _a, metadata, _b, fetchPolicy, _c, context, query, variables, storeResult, isNetworkOnly, needToFetch, _d, complete, result, shouldFetch, requestId, cancel, networkResult;
             var _this = this;
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__generator"])(this, function (_g) {
-                switch (_g.label) {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__generator"])(this, function (_e) {
+                switch (_e.label) {
                     case 0:
-                        _a = options.variables, variables = _a === void 0 ? {} : _a, _b = options.metadata, metadata = _b === void 0 ? null : _b, _c = options.fetchPolicy, fetchPolicy = _c === void 0 ? 'cache-first' : _c, _d = options.context, context = _d === void 0 ? {} : _d;
-                        cache = this.dataStore.getCache();
-                        query = cache.transformDocument(options.query);
-                        if (!Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["hasClientExports"])(query)) return [3, 2];
+                        _a = options.metadata, metadata = _a === void 0 ? null : _a, _b = options.fetchPolicy, fetchPolicy = _b === void 0 ? 'cache-first' : _b, _c = options.context, context = _c === void 0 ? {} : _c;
+                        query = this.transform(options.query).document;
+                        variables = this.getVariables(query, options.variables);
+                        if (!this.transform(query).hasClientExports) return [3, 2];
                         return [4, this.localState.addExportedVariables(query, variables, context)];
                     case 1:
-                        _e = _g.sent();
-                        return [3, 3];
+                        variables = _e.sent();
+                        _e.label = 2;
                     case 2:
-                        _e = variables;
-                        _g.label = 3;
-                    case 3:
-                        updatedVariables = _e;
-                        updatedOptions = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, options, { variables: updatedVariables });
-                        needToFetch = fetchPolicy === 'network-only' || fetchPolicy === 'no-cache';
-                        if (fetchType !== FetchType.refetch &&
-                            fetchPolicy !== 'network-only' &&
-                            fetchPolicy !== 'no-cache') {
-                            _f = this.dataStore.getCache().diff({
+                        options = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, options, { variables: variables });
+                        isNetworkOnly = fetchPolicy === 'network-only' || fetchPolicy === 'no-cache';
+                        needToFetch = isNetworkOnly;
+                        if (!isNetworkOnly) {
+                            _d = this.dataStore.getCache().diff({
                                 query: query,
-                                variables: updatedVariables,
+                                variables: variables,
                                 returnPartialData: true,
                                 optimistic: false,
-                            }), complete = _f.complete, result = _f.result;
+                            }), complete = _d.complete, result = _d.result;
                             needToFetch = !complete || fetchPolicy === 'cache-and-network';
                             storeResult = result;
                         }
                         shouldFetch = needToFetch && fetchPolicy !== 'cache-only' && fetchPolicy !== 'standby';
                         if (Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["hasDirectives"])(['live'], query))
                             shouldFetch = true;
-                        requestId = this.generateRequestId();
-                        cancel = this.updateQueryWatch(queryId, query, updatedOptions);
+                        requestId = this.idCounter++;
+                        cancel = fetchPolicy !== 'no-cache'
+                            ? this.updateQueryWatch(queryId, query, options)
+                            : undefined;
                         this.setQuery(queryId, function () { return ({
                             document: query,
                             lastRequestId: requestId,
                             invalidated: true,
                             cancel: cancel,
                         }); });
-                        this.invalidate(true, fetchMoreForQueryId);
+                        this.invalidate(fetchMoreForQueryId);
                         this.queryStore.initQuery({
                             queryId: queryId,
                             document: query,
                             storePreviousVariables: shouldFetch,
-                            variables: updatedVariables,
+                            variables: variables,
                             isPoll: fetchType === FetchType.poll,
                             isRefetch: fetchType === FetchType.refetch,
                             metadata: metadata,
                             fetchMoreForQueryId: fetchMoreForQueryId,
                         });
                         this.broadcastQueries();
-                        shouldDispatchClientResult = !shouldFetch || fetchPolicy === 'cache-and-network';
-                        if (shouldDispatchClientResult) {
-                            this.queryStore.markQueryResultClient(queryId, !shouldFetch);
-                            this.invalidate(true, queryId, fetchMoreForQueryId);
-                            this.broadcastQueries(this.localState.shouldForceResolvers(query));
-                        }
                         if (shouldFetch) {
                             networkResult = this.fetchRequest({
                                 requestId: requestId,
                                 queryId: queryId,
                                 document: query,
-                                options: updatedOptions,
+                                options: options,
                                 fetchMoreForQueryId: fetchMoreForQueryId,
                             }).catch(function (error) {
                                 if (isApolloError(error)) {
                                     throw error;
                                 }
                                 else {
-                                    var lastRequestId = _this.getQuery(queryId).lastRequestId;
-                                    if (requestId >= (lastRequestId || 1)) {
+                                    if (requestId >= _this.getQuery(queryId).lastRequestId) {
                                         _this.queryStore.markQueryError(queryId, error, fetchMoreForQueryId);
-                                        _this.invalidate(true, queryId, fetchMoreForQueryId);
+                                        _this.invalidate(queryId);
+                                        _this.invalidate(fetchMoreForQueryId);
                                         _this.broadcastQueries();
                                     }
                                     throw new ApolloError({ networkError: error });
@@ -3869,185 +4205,173 @@ var QueryManager = (function () {
                             if (fetchPolicy !== 'cache-and-network') {
                                 return [2, networkResult];
                             }
-                            else {
-                                networkResult.catch(function () { });
-                            }
+                            networkResult.catch(function () { });
                         }
-                        return [2, Promise.resolve({ data: storeResult })];
+                        this.queryStore.markQueryResultClient(queryId, !shouldFetch);
+                        this.invalidate(queryId);
+                        this.invalidate(fetchMoreForQueryId);
+                        if (this.transform(query).hasForcedResolvers) {
+                            return [2, this.localState.runResolvers({
+                                    document: query,
+                                    remoteResult: { data: storeResult },
+                                    context: context,
+                                    variables: variables,
+                                    onlyRunForcedResolvers: true,
+                                }).then(function (result) {
+                                    _this.markQueryResult(queryId, result, options, fetchMoreForQueryId);
+                                    _this.broadcastQueries();
+                                    return result;
+                                })];
+                        }
+                        this.broadcastQueries();
+                        return [2, { data: storeResult }];
                 }
             });
         });
     };
+    QueryManager.prototype.markQueryResult = function (queryId, result, _a, fetchMoreForQueryId) {
+        var fetchPolicy = _a.fetchPolicy, variables = _a.variables, errorPolicy = _a.errorPolicy;
+        if (fetchPolicy === 'no-cache') {
+            this.setQuery(queryId, function () { return ({
+                newData: { result: result.data, complete: true },
+            }); });
+        }
+        else {
+            this.dataStore.markQueryResult(result, this.getQuery(queryId).document, variables, fetchMoreForQueryId, errorPolicy === 'ignore' || errorPolicy === 'all');
+        }
+    };
     QueryManager.prototype.queryListenerForObserver = function (queryId, options, observer) {
         var _this = this;
-        var previouslyHadError = false;
-        return function (queryStoreValue, newData, forceResolvers) { return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this, void 0, void 0, function () {
-            var observableQuery, fetchPolicy, errorPolicy, lastResult, lastError, shouldNotifyIfLoading, networkStatusChanged, errorStatusChanged, apolloError_1, data, isMissing, document_1, readResult, resultFromStore, query, variables, context, updatedResult, e_1, error_1;
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__generator"])(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        this.invalidate(false, queryId);
-                        if (!queryStoreValue)
-                            return [2];
-                        observableQuery = this.getQuery(queryId).observableQuery;
-                        fetchPolicy = observableQuery
-                            ? observableQuery.options.fetchPolicy
-                            : options.fetchPolicy;
-                        if (fetchPolicy === 'standby')
-                            return [2];
-                        errorPolicy = observableQuery
-                            ? observableQuery.options.errorPolicy
-                            : options.errorPolicy;
-                        lastResult = observableQuery
-                            ? observableQuery.getLastResult()
-                            : null;
-                        lastError = observableQuery ? observableQuery.getLastError() : null;
-                        shouldNotifyIfLoading = (!newData && queryStoreValue.previousVariables != null) ||
-                            fetchPolicy === 'cache-only' ||
-                            fetchPolicy === 'cache-and-network';
-                        networkStatusChanged = Boolean(lastResult &&
-                            queryStoreValue.networkStatus !== lastResult.networkStatus);
-                        errorStatusChanged = errorPolicy &&
-                            (lastError && lastError.graphQLErrors) !==
-                                queryStoreValue.graphQLErrors &&
-                            errorPolicy !== 'none';
-                        if (!(!isNetworkRequestInFlight(queryStoreValue.networkStatus) ||
-                            (networkStatusChanged && options.notifyOnNetworkStatusChange) ||
-                            shouldNotifyIfLoading)) return [3, 8];
-                        if (((!errorPolicy || errorPolicy === 'none') &&
-                            queryStoreValue.graphQLErrors &&
-                            queryStoreValue.graphQLErrors.length > 0) ||
-                            queryStoreValue.networkError) {
-                            apolloError_1 = new ApolloError({
-                                graphQLErrors: queryStoreValue.graphQLErrors,
-                                networkError: queryStoreValue.networkError,
-                            });
-                            previouslyHadError = true;
-                            if (observer.error) {
-                                try {
-                                    observer.error(apolloError_1);
-                                }
-                                catch (e) {
-                                    setTimeout(function () {
-                                        throw e;
-                                    }, 0);
-                                }
-                            }
-                            else {
-                                setTimeout(function () {
-                                    throw apolloError_1;
-                                }, 0);
-                                if (true) {
-                                    console.info('An unhandled error was thrown because no error handler is registered ' +
-                                        'for the query ' +
-                                        JSON.stringify(queryStoreValue.document));
-                                }
-                            }
-                            return [2];
-                        }
-                        _a.label = 1;
-                    case 1:
-                        _a.trys.push([1, 7, , 8]);
-                        data = void 0;
-                        isMissing = void 0;
-                        if (newData) {
-                            if (fetchPolicy !== 'no-cache' && fetchPolicy !== 'network-only') {
-                                this.setQuery(queryId, function () { return ({ newData: null }); });
-                            }
-                            data = newData.result;
-                            isMissing = !newData.complete || false;
-                        }
-                        else {
-                            if (lastResult && lastResult.data && !errorStatusChanged) {
-                                data = lastResult.data;
-                                isMissing = false;
-                            }
-                            else {
-                                document_1 = this.getQuery(queryId).document;
-                                readResult = this.dataStore.getCache().diff({
-                                    query: document_1,
-                                    variables: queryStoreValue.previousVariables ||
-                                        queryStoreValue.variables,
-                                    optimistic: true,
-                                });
-                                data = readResult.result;
-                                isMissing = !readResult.complete;
-                            }
-                        }
-                        resultFromStore = void 0;
-                        if (isMissing && fetchPolicy !== 'cache-only') {
-                            resultFromStore = {
-                                data: lastResult && lastResult.data,
-                                loading: isNetworkRequestInFlight(queryStoreValue.networkStatus),
-                                networkStatus: queryStoreValue.networkStatus,
-                                stale: true,
-                            };
-                        }
-                        else {
-                            resultFromStore = {
-                                data: data,
-                                loading: isNetworkRequestInFlight(queryStoreValue.networkStatus),
-                                networkStatus: queryStoreValue.networkStatus,
-                                stale: false,
-                            };
-                        }
-                        if (errorPolicy === 'all' &&
-                            queryStoreValue.graphQLErrors &&
-                            queryStoreValue.graphQLErrors.length > 0) {
-                            resultFromStore.errors = queryStoreValue.graphQLErrors;
-                        }
-                        if (!observer.next) return [3, 6];
-                        if (!(previouslyHadError ||
-                            !observableQuery ||
-                            observableQuery.isDifferentFromLastResult(resultFromStore))) return [3, 6];
-                        _a.label = 2;
-                    case 2:
-                        _a.trys.push([2, 5, , 6]);
-                        if (!forceResolvers) return [3, 4];
-                        query = options.query, variables = options.variables, context = options.context;
-                        return [4, this.localState.runResolvers({
-                                document: query,
-                                remoteResult: resultFromStore,
-                                context: context,
-                                variables: variables,
-                                onlyRunForcedResolvers: forceResolvers,
-                            })];
-                    case 3:
-                        updatedResult = _a.sent();
-                        resultFromStore = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, resultFromStore, updatedResult);
-                        _a.label = 4;
-                    case 4:
-                        observer.next(resultFromStore);
-                        return [3, 6];
-                    case 5:
-                        e_1 = _a.sent();
-                        setTimeout(function () {
-                            throw e_1;
-                        }, 0);
-                        return [3, 6];
-                    case 6:
-                        previouslyHadError = false;
-                        return [3, 8];
-                    case 7:
-                        error_1 = _a.sent();
-                        previouslyHadError = true;
-                        if (observer.error)
-                            observer.error(new ApolloError({ networkError: error_1 }));
-                        return [2];
-                    case 8: return [2];
+        function invoke(method, argument) {
+            if (observer[method]) {
+                try {
+                    observer[method](argument);
                 }
-            });
-        }); };
+                catch (e) {
+                     false || ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"].error(e);
+                }
+            }
+            else if (method === 'error') {
+                 false || ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"].error(argument);
+            }
+        }
+        return function (queryStoreValue, newData) {
+            _this.invalidate(queryId, false);
+            if (!queryStoreValue)
+                return;
+            var _a = _this.getQuery(queryId), observableQuery = _a.observableQuery, document = _a.document;
+            var fetchPolicy = observableQuery
+                ? observableQuery.options.fetchPolicy
+                : options.fetchPolicy;
+            if (fetchPolicy === 'standby')
+                return;
+            var loading = isNetworkRequestInFlight(queryStoreValue.networkStatus);
+            var lastResult = observableQuery && observableQuery.getLastResult();
+            var networkStatusChanged = !!(lastResult &&
+                lastResult.networkStatus !== queryStoreValue.networkStatus);
+            var shouldNotifyIfLoading = options.returnPartialData ||
+                (!newData && queryStoreValue.previousVariables) ||
+                (networkStatusChanged && options.notifyOnNetworkStatusChange) ||
+                fetchPolicy === 'cache-only' ||
+                fetchPolicy === 'cache-and-network';
+            if (loading && !shouldNotifyIfLoading) {
+                return;
+            }
+            var hasGraphQLErrors = isNonEmptyArray(queryStoreValue.graphQLErrors);
+            var errorPolicy = observableQuery
+                && observableQuery.options.errorPolicy
+                || options.errorPolicy
+                || 'none';
+            if (errorPolicy === 'none' && hasGraphQLErrors || queryStoreValue.networkError) {
+                return invoke('error', new ApolloError({
+                    graphQLErrors: queryStoreValue.graphQLErrors,
+                    networkError: queryStoreValue.networkError,
+                }));
+            }
+            try {
+                var data = void 0;
+                var isMissing = void 0;
+                if (newData) {
+                    if (fetchPolicy !== 'no-cache' && fetchPolicy !== 'network-only') {
+                        _this.setQuery(queryId, function () { return ({ newData: null }); });
+                    }
+                    data = newData.result;
+                    isMissing = !newData.complete;
+                }
+                else {
+                    var lastError = observableQuery && observableQuery.getLastError();
+                    var errorStatusChanged = errorPolicy !== 'none' &&
+                        (lastError && lastError.graphQLErrors) !==
+                            queryStoreValue.graphQLErrors;
+                    if (lastResult && lastResult.data && !errorStatusChanged) {
+                        data = lastResult.data;
+                        isMissing = false;
+                    }
+                    else {
+                        var diffResult = _this.dataStore.getCache().diff({
+                            query: document,
+                            variables: queryStoreValue.previousVariables ||
+                                queryStoreValue.variables,
+                            returnPartialData: true,
+                            optimistic: true,
+                        });
+                        data = diffResult.result;
+                        isMissing = !diffResult.complete;
+                    }
+                }
+                var stale = isMissing && !(options.returnPartialData ||
+                    fetchPolicy === 'cache-only');
+                var resultFromStore = {
+                    data: stale ? lastResult && lastResult.data : data,
+                    loading: loading,
+                    networkStatus: queryStoreValue.networkStatus,
+                    stale: stale,
+                };
+                if (errorPolicy === 'all' && hasGraphQLErrors) {
+                    resultFromStore.errors = queryStoreValue.graphQLErrors;
+                }
+                invoke('next', resultFromStore);
+            }
+            catch (networkError) {
+                invoke('error', new ApolloError({ networkError: networkError }));
+            }
+        };
+    };
+    QueryManager.prototype.transform = function (document) {
+        var transformCache = this.transformCache;
+        if (!transformCache.has(document)) {
+            var cache = this.dataStore.getCache();
+            var transformed = cache.transformDocument(document);
+            var forLink = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["removeConnectionDirectiveFromDocument"])(cache.transformForLink(transformed));
+            var clientQuery = this.localState.clientQuery(transformed);
+            var serverQuery = this.localState.serverQuery(forLink);
+            var cacheEntry_1 = {
+                document: transformed,
+                hasClientExports: Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["hasClientExports"])(transformed),
+                hasForcedResolvers: this.localState.shouldForceResolvers(transformed),
+                clientQuery: clientQuery,
+                serverQuery: serverQuery,
+                defaultVars: Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["getDefaultValues"])(Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["getOperationDefinition"])(transformed)),
+            };
+            var add = function (doc) {
+                if (doc && !transformCache.has(doc)) {
+                    transformCache.set(doc, cacheEntry_1);
+                }
+            };
+            add(document);
+            add(transformed);
+            add(clientQuery);
+            add(serverQuery);
+        }
+        return transformCache.get(document);
+    };
+    QueryManager.prototype.getVariables = function (document, variables) {
+        return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, this.transform(document).defaultVars, variables);
     };
     QueryManager.prototype.watchQuery = function (options, shouldSubscribe) {
         if (shouldSubscribe === void 0) { shouldSubscribe = true; }
          false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"])(options.fetchPolicy !== 'standby', 'client.watchQuery cannot be called with fetchPolicy set to "standby"');
-        var queryDefinition = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["getQueryDefinition"])(options.query);
-        if (queryDefinition.variableDefinitions &&
-            queryDefinition.variableDefinitions.length) {
-            var defaultValues = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["getDefaultValues"])(queryDefinition);
-            options.variables = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["assign"])({}, defaultValues, options.variables);
-        }
+        options.variables = this.getVariables(options.query, options.variables);
         if (typeof options.notifyOnNetworkStatusChange === 'undefined') {
             options.notifyOnNetworkStatusChange = false;
         }
@@ -4077,9 +4401,7 @@ var QueryManager = (function () {
         });
     };
     QueryManager.prototype.generateQueryId = function () {
-        var queryId = this.idCounter.toString();
-        this.idCounter++;
-        return queryId;
+        return String(this.idCounter++);
     };
     QueryManager.prototype.stopQueryInStore = function (queryId) {
         this.stopQueryInStoreNoBroadcast(queryId);
@@ -4088,15 +4410,13 @@ var QueryManager = (function () {
     QueryManager.prototype.stopQueryInStoreNoBroadcast = function (queryId) {
         this.stopPollingQuery(queryId);
         this.queryStore.stopQuery(queryId);
-        this.invalidate(true, queryId);
+        this.invalidate(queryId);
     };
     QueryManager.prototype.addQueryListener = function (queryId, listener) {
         this.setQuery(queryId, function (_a) {
-            var _b = _a.listeners, listeners = _b === void 0 ? [] : _b;
-            return ({
-                listeners: listeners.concat([listener]),
-                invalidated: false,
-            });
+            var listeners = _a.listeners;
+            listeners.add(listener);
+            return { invalidated: false };
         });
     };
     QueryManager.prototype.updateQueryWatch = function (queryId, document, options) {
@@ -4127,31 +4447,16 @@ var QueryManager = (function () {
     };
     QueryManager.prototype.addObservableQuery = function (queryId, observableQuery) {
         this.setQuery(queryId, function () { return ({ observableQuery: observableQuery }); });
-        var queryDef = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["getQueryDefinition"])(observableQuery.options.query);
-        if (queryDef.name && queryDef.name.value) {
-            var queryName = queryDef.name.value;
-            this.queryIdsByName[queryName] = this.queryIdsByName[queryName] || [];
-            this.queryIdsByName[queryName].push(observableQuery.queryId);
-        }
     };
     QueryManager.prototype.removeObservableQuery = function (queryId) {
-        var _a = this.getQuery(queryId), observableQuery = _a.observableQuery, cancel = _a.cancel;
+        var cancel = this.getQuery(queryId).cancel;
+        this.setQuery(queryId, function () { return ({ observableQuery: null }); });
         if (cancel)
             cancel();
-        if (!observableQuery)
-            return;
-        var definition = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["getQueryDefinition"])(observableQuery.options.query);
-        var queryName = definition.name ? definition.name.value : null;
-        this.setQuery(queryId, function () { return ({ observableQuery: null }); });
-        if (queryName) {
-            this.queryIdsByName[queryName] = this.queryIdsByName[queryName].filter(function (val) {
-                return !(observableQuery.queryId === val);
-            });
-        }
     };
     QueryManager.prototype.clearStore = function () {
         this.fetchQueryRejectFns.forEach(function (reject) {
-            reject(new Error('Store reset while query was in flight(not completed in link chain)'));
+            reject( false ? undefined : new ts_invariant__WEBPACK_IMPORTED_MODULE_4__["InvariantError"]('Store reset while query was in flight (not completed in link chain)'));
         });
         var resetIds = [];
         this.queries.forEach(function (_a, queryId) {
@@ -4161,8 +4466,7 @@ var QueryManager = (function () {
         });
         this.queryStore.reset(resetIds);
         this.mutationStore.reset();
-        var reset = this.dataStore.reset();
-        return reset;
+        return this.dataStore.reset();
     };
     QueryManager.prototype.resetStore = function () {
         var _this = this;
@@ -4171,126 +4475,64 @@ var QueryManager = (function () {
         });
     };
     QueryManager.prototype.reFetchObservableQueries = function (includeStandby) {
-        var observableQueryPromises = this.getObservableQueryPromises(includeStandby);
+        var _this = this;
+        if (includeStandby === void 0) { includeStandby = false; }
+        var observableQueryPromises = [];
+        this.queries.forEach(function (_a, queryId) {
+            var observableQuery = _a.observableQuery;
+            if (observableQuery) {
+                var fetchPolicy = observableQuery.options.fetchPolicy;
+                observableQuery.resetLastResults();
+                if (fetchPolicy !== 'cache-only' &&
+                    (includeStandby || fetchPolicy !== 'standby')) {
+                    observableQueryPromises.push(observableQuery.refetch());
+                }
+                _this.setQuery(queryId, function () { return ({ newData: null }); });
+                _this.invalidate(queryId);
+            }
+        });
         this.broadcastQueries();
         return Promise.all(observableQueryPromises);
     };
+    QueryManager.prototype.observeQuery = function (queryId, options, observer) {
+        this.addQueryListener(queryId, this.queryListenerForObserver(queryId, options, observer));
+        return this.fetchQuery(queryId, options);
+    };
     QueryManager.prototype.startQuery = function (queryId, options, listener) {
+         false || ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"].warn("The QueryManager.startQuery method has been deprecated");
         this.addQueryListener(queryId, listener);
         this.fetchQuery(queryId, options)
             .catch(function () { return undefined; });
         return queryId;
     };
-    QueryManager.prototype.startGraphQLSubscription = function (options) {
+    QueryManager.prototype.startGraphQLSubscription = function (_a) {
         var _this = this;
-        var query = options.query;
-        var isCacheEnabled = !(options.fetchPolicy && options.fetchPolicy === 'no-cache');
-        var cache = this.dataStore.getCache();
-        var transformedDoc = cache.transformDocument(query);
-        var variables = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["assign"])({}, Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["getDefaultValues"])(Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["getOperationDefinition"])(query)), options.variables);
-        var updatedVariables = variables;
-        var sub;
-        var observers = [];
-        var clientQuery = this.localState.clientQuery(transformedDoc);
-        return new Observable(function (observer) {
-            observers.push(observer);
-            if (observers.length === 1) {
-                var activeNextCalls_1 = 0;
-                var complete_1 = false;
-                var handler_1 = {
-                    next: function (result) { return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this, void 0, void 0, function () {
-                        var updatedResult;
-                        return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__generator"])(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    activeNextCalls_1 += 1;
-                                    updatedResult = result;
-                                    if (!(clientQuery && Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["hasDirectives"])(['client'], clientQuery))) return [3, 2];
-                                    return [4, this.localState.runResolvers({
-                                            document: clientQuery,
-                                            remoteResult: result,
-                                            context: {},
-                                            variables: updatedVariables,
-                                        })];
-                                case 1:
-                                    updatedResult = _a.sent();
-                                    _a.label = 2;
-                                case 2:
-                                    if (isCacheEnabled) {
-                                        this.dataStore.markSubscriptionResult(updatedResult, transformedDoc, updatedVariables);
-                                        this.broadcastQueries();
-                                    }
-                                    observers.forEach(function (obs) {
-                                        if (Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["graphQLResultHasError"])(updatedResult) && obs.error) {
-                                            obs.error(new ApolloError({
-                                                graphQLErrors: updatedResult.errors,
-                                            }));
-                                        }
-                                        else if (obs.next) {
-                                            obs.next(updatedResult);
-                                        }
-                                        activeNextCalls_1 -= 1;
-                                    });
-                                    if (activeNextCalls_1 === 0 && complete_1) {
-                                        handler_1.complete();
-                                    }
-                                    return [2];
-                            }
-                        });
-                    }); },
-                    error: function (error) {
-                        observers.forEach(function (obs) {
-                            if (obs.error) {
-                                obs.error(error);
-                            }
-                        });
-                    },
-                    complete: function () {
-                        if (activeNextCalls_1 === 0) {
-                            observers.forEach(function (obs) {
-                                if (obs.complete) {
-                                    obs.complete();
-                                }
-                            });
-                        }
-                        complete_1 = true;
-                    }
-                };
-                (function () { return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this, void 0, void 0, function () {
-                    var updatedVariables, _a, serverQuery, operation;
-                    return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__generator"])(this, function (_b) {
-                        switch (_b.label) {
-                            case 0:
-                                if (!Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["hasClientExports"])(transformedDoc)) return [3, 2];
-                                return [4, this.localState.addExportedVariables(transformedDoc, variables)];
-                            case 1:
-                                _a = _b.sent();
-                                return [3, 3];
-                            case 2:
-                                _a = variables;
-                                _b.label = 3;
-                            case 3:
-                                updatedVariables = _a;
-                                serverQuery = this.localState.serverQuery(transformedDoc);
-                                if (serverQuery) {
-                                    operation = this.buildOperationForLink(serverQuery, updatedVariables);
-                                    sub = Object(apollo_link__WEBPACK_IMPORTED_MODULE_2__["execute"])(this.link, operation).subscribe(handler_1);
-                                }
-                                else {
-                                    sub = Observable.of({ data: {} }).subscribe(handler_1);
-                                }
-                                return [2];
-                        }
-                    });
-                }); })();
-            }
-            return function () {
-                observers = observers.filter(function (obs) { return obs !== observer; });
-                if (observers.length === 0 && sub) {
-                    sub.unsubscribe();
+        var query = _a.query, fetchPolicy = _a.fetchPolicy, variables = _a.variables;
+        query = this.transform(query).document;
+        variables = this.getVariables(query, variables);
+        var makeObservable = function (variables) {
+            return _this.getObservableFromLink(query, {}, variables, false).map(function (result) {
+                if (!fetchPolicy || fetchPolicy !== 'no-cache') {
+                    _this.dataStore.markSubscriptionResult(result, query, variables);
+                    _this.broadcastQueries();
                 }
-            };
-        });
+                if (Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["graphQLResultHasError"])(result)) {
+                    throw new ApolloError({
+                        graphQLErrors: result.errors,
+                    });
+                }
+                return result;
+            });
+        };
+        if (this.transform(query).hasClientExports) {
+            var observablePromise_1 = this.localState.addExportedVariables(query, variables).then(makeObservable);
+            return new Observable(function (observer) {
+                var sub = null;
+                observablePromise_1.then(function (observable) { return sub = observable.subscribe(observer); }, observer.error);
+                return function () { return sub && sub.unsubscribe(); };
+            });
+        }
+        return makeObservable(variables);
     };
     QueryManager.prototype.stopQuery = function (queryId) {
         this.stopQueryNoBroadcast(queryId);
@@ -4301,37 +4543,33 @@ var QueryManager = (function () {
         this.removeQuery(queryId);
     };
     QueryManager.prototype.removeQuery = function (queryId) {
-        var subscriptions = this.getQuery(queryId).subscriptions;
         this.fetchQueryRejectFns.delete("query:" + queryId);
         this.fetchQueryRejectFns.delete("fetchRequest:" + queryId);
-        subscriptions.forEach(function (x) { return x.unsubscribe(); });
+        this.getQuery(queryId).subscriptions.forEach(function (x) { return x.unsubscribe(); });
         this.queries.delete(queryId);
     };
     QueryManager.prototype.getCurrentQueryResult = function (observableQuery, optimistic) {
         if (optimistic === void 0) { optimistic = true; }
-        var _a = observableQuery.options, variables = _a.variables, query = _a.query, fetchPolicy = _a.fetchPolicy;
+        var _a = observableQuery.options, variables = _a.variables, query = _a.query, fetchPolicy = _a.fetchPolicy, returnPartialData = _a.returnPartialData;
         var lastResult = observableQuery.getLastResult();
         var newData = this.getQuery(observableQuery.queryId).newData;
         if (newData && newData.complete) {
             return { data: newData.result, partial: false };
         }
-        else if (fetchPolicy === 'no-cache' || fetchPolicy === 'network-only') {
+        if (fetchPolicy === 'no-cache' || fetchPolicy === 'network-only') {
             return { data: undefined, partial: false };
         }
-        else {
-            try {
-                var data = this.dataStore.getCache().read({
-                    query: query,
-                    variables: variables,
-                    previousResult: lastResult ? lastResult.data : undefined,
-                    optimistic: optimistic,
-                }) || undefined;
-                return { data: data, partial: false };
-            }
-            catch (e) {
-                return { data: undefined, partial: true };
-            }
-        }
+        var _b = this.dataStore.getCache().diff({
+            query: query,
+            variables: variables,
+            previousResult: lastResult ? lastResult.data : undefined,
+            returnPartialData: true,
+            optimistic: optimistic,
+        }), result = _b.result, complete = _b.complete;
+        return {
+            data: (complete || returnPartialData) ? result : void 0,
+            partial: !complete,
+        };
     };
     QueryManager.prototype.getQueryWithPreviousResult = function (queryIdOrObservable) {
         var observableQuery;
@@ -4344,215 +4582,161 @@ var QueryManager = (function () {
             observableQuery = queryIdOrObservable;
         }
         var _a = observableQuery.options, variables = _a.variables, query = _a.query;
-        var data = this.getCurrentQueryResult(observableQuery, false).data;
         return {
-            previousResult: data,
+            previousResult: this.getCurrentQueryResult(observableQuery, false).data,
             variables: variables,
             document: query,
         };
     };
-    QueryManager.prototype.broadcastQueries = function (forceResolvers) {
+    QueryManager.prototype.broadcastQueries = function () {
         var _this = this;
-        if (forceResolvers === void 0) { forceResolvers = false; }
         this.onBroadcast();
         this.queries.forEach(function (info, id) {
-            if (!info.invalidated || !info.listeners)
-                return;
-            info.listeners
-                .filter(function (x) { return !!x; })
-                .forEach(function (listener) {
-                listener(_this.queryStore.get(id), info.newData, forceResolvers);
-            });
+            if (info.invalidated) {
+                info.listeners.forEach(function (listener) {
+                    if (listener) {
+                        listener(_this.queryStore.get(id), info.newData);
+                    }
+                });
+            }
         });
     };
     QueryManager.prototype.getLocalState = function () {
         return this.localState;
     };
-    QueryManager.prototype.getObservableQueryPromises = function (includeStandby) {
+    QueryManager.prototype.getObservableFromLink = function (query, context, variables, deduplication) {
         var _this = this;
-        var observableQueryPromises = [];
-        this.queries.forEach(function (_a, queryId) {
-            var observableQuery = _a.observableQuery;
-            if (!observableQuery)
-                return;
-            var fetchPolicy = observableQuery.options.fetchPolicy;
-            observableQuery.resetLastResults();
-            if (fetchPolicy !== 'cache-only' &&
-                (includeStandby || fetchPolicy !== 'standby')) {
-                observableQueryPromises.push(observableQuery.refetch());
+        if (deduplication === void 0) { deduplication = this.queryDeduplication; }
+        var observable;
+        var serverQuery = this.transform(query).serverQuery;
+        if (serverQuery) {
+            var _a = this, inFlightLinkObservables_1 = _a.inFlightLinkObservables, link = _a.link;
+            var operation = {
+                query: serverQuery,
+                variables: variables,
+                operationName: Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["getOperationName"])(serverQuery) || void 0,
+                context: this.prepareContext(Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, context, { forceFetch: !deduplication })),
+            };
+            context = operation.context;
+            if (deduplication) {
+                var byVariables_1 = inFlightLinkObservables_1.get(serverQuery) || new Map();
+                inFlightLinkObservables_1.set(serverQuery, byVariables_1);
+                var varJson_1 = JSON.stringify(variables);
+                observable = byVariables_1.get(varJson_1);
+                if (!observable) {
+                    byVariables_1.set(varJson_1, observable = multiplex(Object(apollo_link__WEBPACK_IMPORTED_MODULE_2__["execute"])(link, operation)));
+                    var cleanup = function () {
+                        byVariables_1.delete(varJson_1);
+                        if (!byVariables_1.size)
+                            inFlightLinkObservables_1.delete(serverQuery);
+                        cleanupSub_1.unsubscribe();
+                    };
+                    var cleanupSub_1 = observable.subscribe({
+                        next: cleanup,
+                        error: cleanup,
+                        complete: cleanup,
+                    });
+                }
             }
-            _this.setQuery(queryId, function () { return ({ newData: null }); });
-            _this.invalidate(true, queryId);
-        });
-        return observableQueryPromises;
+            else {
+                observable = multiplex(Object(apollo_link__WEBPACK_IMPORTED_MODULE_2__["execute"])(link, operation));
+            }
+        }
+        else {
+            observable = Observable.of({ data: {} });
+            context = this.prepareContext(context);
+        }
+        var clientQuery = this.transform(query).clientQuery;
+        if (clientQuery) {
+            observable = asyncMap(observable, function (result) {
+                return _this.localState.runResolvers({
+                    document: clientQuery,
+                    remoteResult: result,
+                    context: context,
+                    variables: variables,
+                });
+            });
+        }
+        return observable;
     };
     QueryManager.prototype.fetchRequest = function (_a) {
         var _this = this;
         var requestId = _a.requestId, queryId = _a.queryId, document = _a.document, options = _a.options, fetchMoreForQueryId = _a.fetchMoreForQueryId;
-        var variables = options.variables, context = options.context, _b = options.errorPolicy, errorPolicy = _b === void 0 ? 'none' : _b, fetchPolicy = options.fetchPolicy;
+        var variables = options.variables, _b = options.errorPolicy, errorPolicy = _b === void 0 ? 'none' : _b, fetchPolicy = options.fetchPolicy;
         var resultFromStore;
         var errorsFromStore;
         return new Promise(function (resolve, reject) {
-            var obs;
-            var updatedContext = {};
-            var clientQuery = _this.localState.clientQuery(document);
-            var serverQuery = _this.localState.serverQuery(document);
-            if (serverQuery) {
-                var operation = _this.buildOperationForLink(serverQuery, variables, Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, context, { forceFetch: !_this.queryDeduplication }));
-                updatedContext = operation.context;
-                obs = Object(apollo_link__WEBPACK_IMPORTED_MODULE_2__["execute"])(_this.deduplicator, operation);
-            }
-            else {
-                updatedContext = _this.prepareContext(context);
-                obs = Observable.of({ data: {} });
-            }
-            _this.fetchQueryRejectFns.set("fetchRequest:" + queryId, reject);
-            var complete = false;
-            var handlingNext = true;
-            var subscriber = {
-                next: function (result) { return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this, void 0, void 0, function () {
-                    var updatedResult, lastRequestId;
-                    return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__generator"])(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                handlingNext = true;
-                                updatedResult = result;
-                                lastRequestId = this.getQuery(queryId).lastRequestId;
-                                if (!(requestId >= (lastRequestId || 1))) return [3, 3];
-                                if (!(clientQuery && Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["hasDirectives"])(['client'], clientQuery))) return [3, 2];
-                                return [4, this.localState
-                                        .runResolvers({
-                                        document: clientQuery,
-                                        remoteResult: result,
-                                        context: updatedContext,
-                                        variables: variables,
-                                    })
-                                        .catch(function (error) {
-                                        handlingNext = false;
-                                        reject(error);
-                                        return result;
-                                    })];
-                            case 1:
-                                updatedResult = _a.sent();
-                                _a.label = 2;
-                            case 2:
-                                if (fetchPolicy !== 'no-cache') {
-                                    try {
-                                        this.dataStore.markQueryResult(updatedResult, document, variables, fetchMoreForQueryId, errorPolicy === 'ignore' || errorPolicy === 'all');
-                                    }
-                                    catch (e) {
-                                        handlingNext = false;
-                                        reject(e);
-                                        return [2];
-                                    }
-                                }
-                                else {
-                                    this.setQuery(queryId, function () { return ({
-                                        newData: { result: updatedResult.data, complete: true },
-                                    }); });
-                                }
-                                this.queryStore.markQueryResult(queryId, updatedResult, fetchMoreForQueryId);
-                                this.invalidate(true, queryId, fetchMoreForQueryId);
-                                this.broadcastQueries();
-                                _a.label = 3;
-                            case 3:
-                                if (updatedResult.errors && errorPolicy === 'none') {
-                                    handlingNext = false;
-                                    reject(new ApolloError({
-                                        graphQLErrors: updatedResult.errors,
-                                    }));
-                                    return [2];
-                                }
-                                else if (errorPolicy === 'all') {
-                                    errorsFromStore = updatedResult.errors;
-                                }
-                                if (fetchMoreForQueryId || fetchPolicy === 'no-cache') {
-                                    resultFromStore = updatedResult.data;
-                                }
-                                else {
-                                    try {
-                                        resultFromStore = this.dataStore.getCache().read({
-                                            variables: variables,
-                                            query: document,
-                                            optimistic: false,
-                                        });
-                                    }
-                                    catch (e) { }
-                                }
-                                handlingNext = false;
-                                if (complete) {
-                                    subscriber.complete();
-                                }
-                                return [2];
-                        }
-                    });
-                }); },
+            var observable = _this.getObservableFromLink(document, options.context, variables);
+            var fqrfId = "fetchRequest:" + queryId;
+            _this.fetchQueryRejectFns.set(fqrfId, reject);
+            var cleanup = function () {
+                _this.fetchQueryRejectFns.delete(fqrfId);
+                _this.setQuery(queryId, function (_a) {
+                    var subscriptions = _a.subscriptions;
+                    subscriptions.delete(subscription);
+                });
+            };
+            var subscription = observable.map(function (result) {
+                if (requestId >= _this.getQuery(queryId).lastRequestId) {
+                    _this.markQueryResult(queryId, result, options, fetchMoreForQueryId);
+                    _this.queryStore.markQueryResult(queryId, result, fetchMoreForQueryId);
+                    _this.invalidate(queryId);
+                    _this.invalidate(fetchMoreForQueryId);
+                    _this.broadcastQueries();
+                }
+                if (errorPolicy === 'none' && isNonEmptyArray(result.errors)) {
+                    return reject(new ApolloError({
+                        graphQLErrors: result.errors,
+                    }));
+                }
+                if (errorPolicy === 'all') {
+                    errorsFromStore = result.errors;
+                }
+                if (fetchMoreForQueryId || fetchPolicy === 'no-cache') {
+                    resultFromStore = result.data;
+                }
+                else {
+                    var _a = _this.dataStore.getCache().diff({
+                        variables: variables,
+                        query: document,
+                        optimistic: false,
+                        returnPartialData: true,
+                    }), result_1 = _a.result, complete = _a.complete;
+                    if (complete || options.returnPartialData) {
+                        resultFromStore = result_1;
+                    }
+                }
+            }).subscribe({
                 error: function (error) {
-                    _this.fetchQueryRejectFns.delete("fetchRequest:" + queryId);
-                    _this.setQuery(queryId, function (_a) {
-                        var subscriptions = _a.subscriptions;
-                        return ({
-                            subscriptions: subscriptions.filter(function (x) { return x !== subscription; }),
-                        });
-                    });
+                    cleanup();
                     reject(error);
                 },
                 complete: function () {
-                    if (!handlingNext) {
-                        _this.fetchQueryRejectFns.delete("fetchRequest:" + queryId);
-                        _this.setQuery(queryId, function (_a) {
-                            var subscriptions = _a.subscriptions;
-                            return ({
-                                subscriptions: subscriptions.filter(function (x) { return x !== subscription; }),
-                            });
-                        });
-                        resolve({
-                            data: resultFromStore,
-                            errors: errorsFromStore,
-                            loading: false,
-                            networkStatus: NetworkStatus.ready,
-                            stale: false,
-                        });
-                    }
-                    complete = true;
+                    cleanup();
+                    resolve({
+                        data: resultFromStore,
+                        errors: errorsFromStore,
+                        loading: false,
+                        networkStatus: NetworkStatus.ready,
+                        stale: false,
+                    });
                 },
-            };
-            var subscription = obs.subscribe(subscriber);
+            });
             _this.setQuery(queryId, function (_a) {
                 var subscriptions = _a.subscriptions;
-                return ({
-                    subscriptions: subscriptions.concat([subscription]),
-                });
+                subscriptions.add(subscription);
             });
-        }).catch(function (error) {
-            _this.fetchQueryRejectFns.delete("fetchRequest:" + queryId);
-            throw error;
         });
-    };
-    QueryManager.prototype.refetchQueryByName = function (queryName) {
-        var _this = this;
-        var refetchedQueries = this.queryIdsByName[queryName];
-        if (refetchedQueries === undefined)
-            return;
-        return Promise.all(refetchedQueries
-            .map(function (id) { return _this.getQuery(id).observableQuery; })
-            .filter(function (x) { return !!x; })
-            .map(function (x) { return x.refetch(); }));
-    };
-    QueryManager.prototype.generateRequestId = function () {
-        var requestId = this.idCounter;
-        this.idCounter++;
-        return requestId;
     };
     QueryManager.prototype.getQuery = function (queryId) {
         return (this.queries.get(queryId) || {
-            listeners: [],
+            listeners: new Set(),
             invalidated: false,
             document: null,
             newData: null,
-            lastRequestId: null,
+            lastRequestId: 1,
             observableQuery: null,
-            subscriptions: [],
+            subscriptions: new Set(),
         });
     };
     QueryManager.prototype.setQuery = function (queryId, updater) {
@@ -4560,23 +4744,11 @@ var QueryManager = (function () {
         var newInfo = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, prev, updater(prev));
         this.queries.set(queryId, newInfo);
     };
-    QueryManager.prototype.invalidate = function (invalidated, queryId, fetchMoreForQueryId) {
-        if (queryId)
+    QueryManager.prototype.invalidate = function (queryId, invalidated) {
+        if (invalidated === void 0) { invalidated = true; }
+        if (queryId) {
             this.setQuery(queryId, function () { return ({ invalidated: invalidated }); });
-        if (fetchMoreForQueryId) {
-            this.setQuery(fetchMoreForQueryId, function () { return ({ invalidated: invalidated }); });
         }
-    };
-    QueryManager.prototype.buildOperationForLink = function (document, variables, extraContext) {
-        var cache = this.dataStore.getCache();
-        return {
-            query: cache.transformForLink
-                ? cache.transformForLink(document)
-                : document,
-            variables: variables,
-            operationName: Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["getOperationName"])(document) || undefined,
-            context: this.prepareContext(extraContext),
-        };
     };
     QueryManager.prototype.prepareContext = function (context) {
         if (context === void 0) { context = {}; }
@@ -4590,58 +4762,43 @@ var QueryManager = (function () {
             query.networkStatus !== NetworkStatus.error);
     };
     QueryManager.prototype.startPollingQuery = function (options, queryId, listener) {
+        var _this = this;
         var pollInterval = options.pollInterval;
          false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"])(pollInterval, 'Attempted to start a polling query without a polling interval.');
         if (!this.ssrMode) {
-            this.pollingInfoByQueryId.set(queryId, {
-                interval: pollInterval,
-                lastPollTimeMs: Date.now() - 10,
-                options: Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, options, { fetchPolicy: 'network-only' }),
-            });
+            var info = this.pollingInfoByQueryId.get(queryId);
+            if (!info) {
+                this.pollingInfoByQueryId.set(queryId, (info = {}));
+            }
+            info.interval = pollInterval;
+            info.options = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, options, { fetchPolicy: 'network-only' });
+            var maybeFetch_1 = function () {
+                var info = _this.pollingInfoByQueryId.get(queryId);
+                if (info) {
+                    if (_this.checkInFlight(queryId)) {
+                        poll_1();
+                    }
+                    else {
+                        _this.fetchQuery(queryId, info.options, FetchType.poll).then(poll_1, poll_1);
+                    }
+                }
+            };
+            var poll_1 = function () {
+                var info = _this.pollingInfoByQueryId.get(queryId);
+                if (info) {
+                    clearTimeout(info.timeout);
+                    info.timeout = setTimeout(maybeFetch_1, info.interval);
+                }
+            };
             if (listener) {
                 this.addQueryListener(queryId, listener);
             }
-            this.schedulePoll(pollInterval);
+            poll_1();
         }
         return queryId;
     };
     QueryManager.prototype.stopPollingQuery = function (queryId) {
         this.pollingInfoByQueryId.delete(queryId);
-    };
-    QueryManager.prototype.schedulePoll = function (timeLimitMs) {
-        var _this = this;
-        var now = Date.now();
-        if (this.nextPoll) {
-            if (timeLimitMs < this.nextPoll.time - now) {
-                clearTimeout(this.nextPoll.timeout);
-            }
-            else {
-                return;
-            }
-        }
-        this.nextPoll = {
-            time: now + timeLimitMs,
-            timeout: setTimeout(function () {
-                _this.nextPoll = null;
-                var nextTimeLimitMs = Infinity;
-                _this.pollingInfoByQueryId.forEach(function (info, queryId) {
-                    if (info.interval < nextTimeLimitMs) {
-                        nextTimeLimitMs = info.interval;
-                    }
-                    if (!_this.checkInFlight(queryId)) {
-                        if (Date.now() - info.lastPollTimeMs >= info.interval) {
-                            var updateLastPollTime = function () {
-                                info.lastPollTimeMs = Date.now();
-                            };
-                            _this.fetchQuery(queryId, info.options, FetchType.poll).then(updateLastPollTime, updateLastPollTime);
-                        }
-                    }
-                });
-                if (isFinite(nextTimeLimitMs)) {
-                    _this.schedulePoll(nextTimeLimitMs);
-                }
-            }, timeLimitMs),
-        };
     };
     return QueryManager;
 }());
@@ -4688,21 +4845,18 @@ var DataStore = (function () {
             else {
                 optimistic_1 = mutation.optimisticResponse;
             }
-            var changeFn_1 = function () {
-                _this.markMutationResult({
-                    mutationId: mutation.mutationId,
-                    result: { data: optimistic_1 },
-                    document: mutation.document,
-                    variables: mutation.variables,
-                    updateQueries: mutation.updateQueries,
-                    update: mutation.update,
-                });
-            };
             this.cache.recordOptimisticTransaction(function (c) {
                 var orig = _this.cache;
                 _this.cache = c;
                 try {
-                    changeFn_1();
+                    _this.markMutationResult({
+                        mutationId: mutation.mutationId,
+                        result: { data: optimistic_1 },
+                        document: mutation.document,
+                        variables: mutation.variables,
+                        updateQueries: mutation.updateQueries,
+                        update: mutation.update,
+                    });
                 }
                 finally {
                     _this.cache = orig;
@@ -4713,60 +4867,55 @@ var DataStore = (function () {
     DataStore.prototype.markMutationResult = function (mutation) {
         var _this = this;
         if (!Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["graphQLResultHasError"])(mutation.result)) {
-            var cacheWrites_1 = [];
-            cacheWrites_1.push({
-                result: mutation.result.data,
-                dataId: 'ROOT_MUTATION',
-                query: mutation.document,
-                variables: mutation.variables,
-            });
-            if (mutation.updateQueries) {
-                Object.keys(mutation.updateQueries)
-                    .filter(function (id) { return mutation.updateQueries[id]; })
-                    .forEach(function (queryId) {
-                    var _a = mutation.updateQueries[queryId], query = _a.query, updater = _a.updater;
+            var cacheWrites_1 = [{
+                    result: mutation.result.data,
+                    dataId: 'ROOT_MUTATION',
+                    query: mutation.document,
+                    variables: mutation.variables,
+                }];
+            var updateQueries_1 = mutation.updateQueries;
+            if (updateQueries_1) {
+                Object.keys(updateQueries_1).forEach(function (id) {
+                    var _a = updateQueries_1[id], query = _a.query, updater = _a.updater;
                     var _b = _this.cache.diff({
                         query: query.document,
                         variables: query.variables,
                         returnPartialData: true,
                         optimistic: false,
                     }), currentQueryResult = _b.result, complete = _b.complete;
-                    if (!complete) {
-                        return;
-                    }
-                    var nextQueryResult = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["tryFunctionOrLogError"])(function () {
-                        return updater(currentQueryResult, {
-                            mutationResult: mutation.result,
-                            queryName: Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["getOperationName"])(query.document) || undefined,
-                            queryVariables: query.variables,
+                    if (complete) {
+                        var nextQueryResult = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["tryFunctionOrLogError"])(function () {
+                            return updater(currentQueryResult, {
+                                mutationResult: mutation.result,
+                                queryName: Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["getOperationName"])(query.document) || undefined,
+                                queryVariables: query.variables,
+                            });
                         });
-                    });
-                    if (nextQueryResult) {
-                        cacheWrites_1.push({
-                            result: nextQueryResult,
-                            dataId: 'ROOT_QUERY',
-                            query: query.document,
-                            variables: query.variables,
-                        });
+                        if (nextQueryResult) {
+                            cacheWrites_1.push({
+                                result: nextQueryResult,
+                                dataId: 'ROOT_QUERY',
+                                query: query.document,
+                                variables: query.variables,
+                            });
+                        }
                     }
                 });
             }
             this.cache.performTransaction(function (c) {
                 cacheWrites_1.forEach(function (write) { return c.write(write); });
+                var update = mutation.update;
+                if (update) {
+                    Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["tryFunctionOrLogError"])(function () { return update(c, mutation.result); });
+                }
             });
-            var update_1 = mutation.update;
-            if (update_1) {
-                this.cache.performTransaction(function (c) {
-                    Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["tryFunctionOrLogError"])(function () { return update_1(c, mutation.result); });
-                });
-            }
         }
     };
     DataStore.prototype.markMutationComplete = function (_a) {
         var mutationId = _a.mutationId, optimisticResponse = _a.optimisticResponse;
-        if (!optimisticResponse)
-            return;
-        this.cache.removeOptimistic(mutationId);
+        if (optimisticResponse) {
+            this.cache.removeOptimistic(mutationId);
+        }
     };
     DataStore.prototype.markUpdateQueryResult = function (document, variables, newResult) {
         this.cache.write({
@@ -4782,7 +4931,7 @@ var DataStore = (function () {
     return DataStore;
 }());
 
-var version = "2.5.1";
+var version = "2.6.2";
 
 var hasSuggestedDevtools = false;
 var ApolloClient = (function () {
@@ -4791,32 +4940,21 @@ var ApolloClient = (function () {
         this.defaultOptions = {};
         this.resetStoreCallbacks = [];
         this.clearStoreCallbacks = [];
-        this.clientAwareness = {};
-        var cache = options.cache, _a = options.ssrMode, ssrMode = _a === void 0 ? false : _a, _b = options.ssrForceFetchDelay, ssrForceFetchDelay = _b === void 0 ? 0 : _b, connectToDevTools = options.connectToDevTools, _c = options.queryDeduplication, queryDeduplication = _c === void 0 ? true : _c, defaultOptions = options.defaultOptions, resolvers = options.resolvers, typeDefs = options.typeDefs, fragmentMatcher = options.fragmentMatcher, clientAwarenessName = options.name, clientAwarenessVersion = options.version;
+        var cache = options.cache, _a = options.ssrMode, ssrMode = _a === void 0 ? false : _a, _b = options.ssrForceFetchDelay, ssrForceFetchDelay = _b === void 0 ? 0 : _b, connectToDevTools = options.connectToDevTools, _c = options.queryDeduplication, queryDeduplication = _c === void 0 ? true : _c, defaultOptions = options.defaultOptions, _d = options.assumeImmutableResults, assumeImmutableResults = _d === void 0 ? false : _d, resolvers = options.resolvers, typeDefs = options.typeDefs, fragmentMatcher = options.fragmentMatcher, clientAwarenessName = options.name, clientAwarenessVersion = options.version;
         var link = options.link;
         if (!link && resolvers) {
             link = apollo_link__WEBPACK_IMPORTED_MODULE_2__["ApolloLink"].empty();
         }
         if (!link || !cache) {
-            throw  false ? undefined : new ts_invariant__WEBPACK_IMPORTED_MODULE_4__["InvariantError"]("\n        In order to initialize Apollo Client, you must specify link & cache properties on the config object.\n        This is part of the required upgrade when migrating from Apollo Client 1.0 to Apollo Client 2.0.\n        For more information, please visit:\n          https://www.apollographql.com/docs/react/basics/setup.html\n        to help you get started.\n      ");
+            throw  false ? undefined : new ts_invariant__WEBPACK_IMPORTED_MODULE_4__["InvariantError"]("In order to initialize Apollo Client, you must specify 'link' and 'cache' properties in the options object.\n" +
+                "These options are part of the upgrade requirements when migrating from Apollo Client 1.x to Apollo Client 2.x.\n" +
+                "For more information, please visit: https://www.apollographql.com/docs/tutorial/client.html#apollo-client-setup");
         }
-        var supportedCache = new Map();
-        var supportedDirectives = new apollo_link__WEBPACK_IMPORTED_MODULE_2__["ApolloLink"](function (operation, forward) {
-            var result = supportedCache.get(operation.query);
-            if (!result) {
-                result = Object(apollo_utilities__WEBPACK_IMPORTED_MODULE_1__["removeConnectionDirectiveFromDocument"])(operation.query);
-                supportedCache.set(operation.query, result);
-                supportedCache.set(result, result);
-            }
-            operation.query = result;
-            return forward(operation);
-        });
-        this.link = supportedDirectives.concat(link);
+        this.link = link;
         this.cache = cache;
         this.store = new DataStore(cache);
         this.disableNetworkFetches = ssrMode || ssrForceFetchDelay > 0;
         this.queryDeduplication = queryDeduplication;
-        this.ssrMode = ssrMode;
         this.defaultOptions = defaultOptions || {};
         this.typeDefs = typeDefs;
         if (ssrForceFetchDelay) {
@@ -4852,23 +4990,39 @@ var ApolloClient = (function () {
             }
         }
         this.version = version;
-        if (clientAwarenessName) {
-            this.clientAwareness.name = clientAwarenessName;
-        }
-        if (clientAwarenessVersion) {
-            this.clientAwareness.version = clientAwarenessVersion;
-        }
         this.localState = new LocalState({
             cache: cache,
             client: this,
             resolvers: resolvers,
             fragmentMatcher: fragmentMatcher,
         });
+        this.queryManager = new QueryManager({
+            link: this.link,
+            store: this.store,
+            queryDeduplication: queryDeduplication,
+            ssrMode: ssrMode,
+            clientAwareness: {
+                name: clientAwarenessName,
+                version: clientAwarenessVersion,
+            },
+            localState: this.localState,
+            assumeImmutableResults: assumeImmutableResults,
+            onBroadcast: function () {
+                if (_this.devToolsHookCb) {
+                    _this.devToolsHookCb({
+                        action: {},
+                        state: {
+                            queries: _this.queryManager.queryStore.getStore(),
+                            mutations: _this.queryManager.mutationStore.getStore(),
+                        },
+                        dataWithOptimisticResults: _this.cache.extract(true),
+                    });
+                }
+            },
+        });
     }
     ApolloClient.prototype.stop = function () {
-        if (this.queryManager) {
-            this.queryManager.stop();
-        }
+        this.queryManager.stop();
     };
     ApolloClient.prototype.watchQuery = function (options) {
         if (this.defaultOptions.watchQuery) {
@@ -4879,48 +5033,51 @@ var ApolloClient = (function () {
                 options.fetchPolicy === 'cache-and-network')) {
             options = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, options, { fetchPolicy: 'cache-first' });
         }
-        return this.initQueryManager().watchQuery(options);
+        return this.queryManager.watchQuery(options);
     };
     ApolloClient.prototype.query = function (options) {
         if (this.defaultOptions.query) {
             options = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, this.defaultOptions.query, options);
         }
-         false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"])(options.fetchPolicy !== 'cache-and-network', 'cache-and-network fetchPolicy can only be used with watchQuery');
+         false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"])(options.fetchPolicy !== 'cache-and-network', 'The cache-and-network fetchPolicy does not work with client.query, because ' +
+            'client.query can only return a single result. Please use client.watchQuery ' +
+            'to receive multiple results from the cache and the network, or consider ' +
+            'using a different fetchPolicy, such as cache-first or network-only.');
         if (this.disableNetworkFetches && options.fetchPolicy === 'network-only') {
             options = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, options, { fetchPolicy: 'cache-first' });
         }
-        return this.initQueryManager().query(options);
+        return this.queryManager.query(options);
     };
     ApolloClient.prototype.mutate = function (options) {
         if (this.defaultOptions.mutate) {
             options = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, this.defaultOptions.mutate, options);
         }
-        return this.initQueryManager().mutate(options);
+        return this.queryManager.mutate(options);
     };
     ApolloClient.prototype.subscribe = function (options) {
-        return this.initQueryManager().startGraphQLSubscription(options);
+        return this.queryManager.startGraphQLSubscription(options);
     };
     ApolloClient.prototype.readQuery = function (options, optimistic) {
         if (optimistic === void 0) { optimistic = false; }
-        return this.initProxy().readQuery(options, optimistic);
+        return this.cache.readQuery(options, optimistic);
     };
     ApolloClient.prototype.readFragment = function (options, optimistic) {
         if (optimistic === void 0) { optimistic = false; }
-        return this.initProxy().readFragment(options, optimistic);
+        return this.cache.readFragment(options, optimistic);
     };
     ApolloClient.prototype.writeQuery = function (options) {
-        var result = this.initProxy().writeQuery(options);
-        this.initQueryManager().broadcastQueries();
+        var result = this.cache.writeQuery(options);
+        this.queryManager.broadcastQueries();
         return result;
     };
     ApolloClient.prototype.writeFragment = function (options) {
-        var result = this.initProxy().writeFragment(options);
-        this.initQueryManager().broadcastQueries();
+        var result = this.cache.writeFragment(options);
+        this.queryManager.broadcastQueries();
         return result;
     };
     ApolloClient.prototype.writeData = function (options) {
-        var result = this.initProxy().writeData(options);
-        this.initQueryManager().broadcastQueries();
+        var result = this.cache.writeData(options);
+        this.queryManager.broadcastQueries();
         return result;
     };
     ApolloClient.prototype.__actionHookForDevTools = function (cb) {
@@ -4930,58 +5087,22 @@ var ApolloClient = (function () {
         return Object(apollo_link__WEBPACK_IMPORTED_MODULE_2__["execute"])(this.link, payload);
     };
     ApolloClient.prototype.initQueryManager = function () {
-        var _this = this;
-        if (!this.queryManager) {
-            this.queryManager = new QueryManager({
-                link: this.link,
-                store: this.store,
-                queryDeduplication: this.queryDeduplication,
-                ssrMode: this.ssrMode,
-                clientAwareness: this.clientAwareness,
-                localState: this.localState,
-                onBroadcast: function () {
-                    if (_this.devToolsHookCb) {
-                        _this.devToolsHookCb({
-                            action: {},
-                            state: {
-                                queries: _this.queryManager
-                                    ? _this.queryManager.queryStore.getStore()
-                                    : {},
-                                mutations: _this.queryManager
-                                    ? _this.queryManager.mutationStore.getStore()
-                                    : {},
-                            },
-                            dataWithOptimisticResults: _this.cache.extract(true),
-                        });
-                    }
-                },
-            });
-        }
+         false || ts_invariant__WEBPACK_IMPORTED_MODULE_4__["invariant"].warn('Calling the initQueryManager method is no longer necessary, ' +
+            'and it will be removed from ApolloClient in version 3.0.');
         return this.queryManager;
     };
     ApolloClient.prototype.resetStore = function () {
         var _this = this;
         return Promise.resolve()
-            .then(function () {
-            return _this.queryManager
-                ? _this.queryManager.clearStore()
-                : Promise.resolve(null);
-        })
+            .then(function () { return _this.queryManager.clearStore(); })
             .then(function () { return Promise.all(_this.resetStoreCallbacks.map(function (fn) { return fn(); })); })
-            .then(function () {
-            return _this.queryManager && _this.queryManager.reFetchObservableQueries
-                ? _this.queryManager.reFetchObservableQueries()
-                : Promise.resolve(null);
-        });
+            .then(function () { return _this.reFetchObservableQueries(); });
     };
     ApolloClient.prototype.clearStore = function () {
         var _this = this;
-        var queryManager = this.queryManager;
         return Promise.resolve()
-            .then(function () { return Promise.all(_this.clearStoreCallbacks.map(function (fn) { return fn(); })); })
-            .then(function () {
-            return queryManager ? queryManager.clearStore() : Promise.resolve(null);
-        });
+            .then(function () { return _this.queryManager.clearStore(); })
+            .then(function () { return Promise.all(_this.clearStoreCallbacks.map(function (fn) { return fn(); })); });
     };
     ApolloClient.prototype.onResetStore = function (cb) {
         var _this = this;
@@ -4998,15 +5119,13 @@ var ApolloClient = (function () {
         };
     };
     ApolloClient.prototype.reFetchObservableQueries = function (includeStandby) {
-        return this.queryManager
-            ? this.queryManager.reFetchObservableQueries(includeStandby)
-            : Promise.resolve(null);
+        return this.queryManager.reFetchObservableQueries(includeStandby);
     };
     ApolloClient.prototype.extract = function (optimistic) {
-        return this.initProxy().extract(optimistic);
+        return this.cache.extract(optimistic);
     };
     ApolloClient.prototype.restore = function (serializedState) {
-        return this.initProxy().restore(serializedState);
+        return this.cache.restore(serializedState);
     };
     ApolloClient.prototype.addResolvers = function (resolvers) {
         this.localState.addResolvers(resolvers);
@@ -5020,98 +5139,10 @@ var ApolloClient = (function () {
     ApolloClient.prototype.setLocalStateFragmentMatcher = function (fragmentMatcher) {
         this.localState.setFragmentMatcher(fragmentMatcher);
     };
-    ApolloClient.prototype.initProxy = function () {
-        if (!this.proxy) {
-            this.initQueryManager();
-            this.proxy = this.cache;
-        }
-        return this.proxy;
-    };
     return ApolloClient;
 }());
 
 /* harmony default export */ __webpack_exports__["default"] = (ApolloClient);
-
-//# sourceMappingURL=bundle.esm.js.map
-
-
-/***/ }),
-
-/***/ "./node_modules/apollo-link-dedup/lib/bundle.esm.js":
-/*!**********************************************************!*\
-  !*** ./node_modules/apollo-link-dedup/lib/bundle.esm.js ***!
-  \**********************************************************/
-/*! exports provided: DedupLink */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DedupLink", function() { return DedupLink; });
-/* harmony import */ var tslib__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.js");
-/* harmony import */ var apollo_link__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! apollo-link */ "./node_modules/apollo-link/lib/bundle.esm.js");
-
-
-
-var DedupLink = (function (_super) {
-    Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__extends"])(DedupLink, _super);
-    function DedupLink() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.inFlightRequestObservables = new Map();
-        _this.subscribers = new Map();
-        return _this;
-    }
-    DedupLink.prototype.request = function (operation, forward) {
-        var _this = this;
-        if (operation.getContext().forceFetch) {
-            return forward(operation);
-        }
-        var key = operation.toKey();
-        if (!this.inFlightRequestObservables.get(key)) {
-            var singleObserver_1 = forward(operation);
-            var subscription_1;
-            var sharedObserver = new apollo_link__WEBPACK_IMPORTED_MODULE_1__["Observable"](function (observer) {
-                if (!_this.subscribers.has(key))
-                    _this.subscribers.set(key, new Set());
-                _this.subscribers.get(key).add(observer);
-                if (!subscription_1) {
-                    subscription_1 = singleObserver_1.subscribe({
-                        next: function (result) {
-                            var subscribers = _this.subscribers.get(key);
-                            _this.subscribers.delete(key);
-                            _this.inFlightRequestObservables.delete(key);
-                            if (subscribers) {
-                                subscribers.forEach(function (obs) { return obs.next(result); });
-                                subscribers.forEach(function (obs) { return obs.complete(); });
-                            }
-                        },
-                        error: function (error) {
-                            var subscribers = _this.subscribers.get(key);
-                            _this.subscribers.delete(key);
-                            _this.inFlightRequestObservables.delete(key);
-                            if (subscribers) {
-                                subscribers.forEach(function (obs) { return obs.error(error); });
-                            }
-                        },
-                    });
-                }
-                return function () {
-                    if (_this.subscribers.has(key)) {
-                        _this.subscribers.get(key).delete(observer);
-                        if (_this.subscribers.get(key).size === 0) {
-                            _this.inFlightRequestObservables.delete(key);
-                            if (subscription_1)
-                                subscription_1.unsubscribe();
-                        }
-                    }
-                };
-            });
-            this.inFlightRequestObservables.set(key, sharedObserver);
-        }
-        return this.inFlightRequestObservables.get(key);
-    };
-    return DedupLink;
-}(apollo_link__WEBPACK_IMPORTED_MODULE_1__["ApolloLink"]));
-
 
 //# sourceMappingURL=bundle.esm.js.map
 
@@ -5897,70 +5928,75 @@ var invariant$1 = invariant;
 /*!*********************************************************!*\
   !*** ./node_modules/apollo-utilities/lib/bundle.esm.js ***!
   \*********************************************************/
-/*! exports provided: getDirectiveInfoFromField, shouldInclude, getDirectiveNames, hasDirectives, hasClientExports, getFragmentQueryDocument, getMutationDefinition, checkDocument, getOperationDefinition, getOperationDefinitionOrDie, getOperationName, getFragmentDefinitions, getQueryDefinition, getFragmentDefinition, getMainDefinition, createFragmentMap, getDefaultValues, variablesInOperation, removeDirectivesFromDocument, addTypenameToDocument, removeConnectionDirectiveFromDocument, getDirectivesFromDocument, removeArgumentsFromDocument, removeFragmentSpreadFromDocument, buildQueryFromSelectionSet, removeClientSetsFromDocument, isScalarValue, isNumberValue, valueToObjectRepresentation, storeKeyNameFromField, getStoreKeyName, argumentsObjectFromField, resultKeyNameFromField, isField, isInlineFragment, isIdValue, toIdValue, isJsonValue, valueFromNode, assign, cloneDeep, getEnv, isEnv, isProduction, isDevelopment, isTest, tryFunctionOrLogError, graphQLResultHasError, isEqual, maybeDeepFreeze, mergeDeep, mergeDeepArray, warnOnceInDevelopment, stripSymbols */
+/*! exports provided: isEqual, addTypenameToDocument, argumentsObjectFromField, assign, buildQueryFromSelectionSet, canUseWeakMap, checkDocument, cloneDeep, createFragmentMap, getDefaultValues, getDirectiveInfoFromField, getDirectiveNames, getDirectivesFromDocument, getEnv, getFragmentDefinition, getFragmentDefinitions, getFragmentQueryDocument, getInclusionDirectives, getMainDefinition, getMutationDefinition, getOperationDefinition, getOperationDefinitionOrDie, getOperationName, getQueryDefinition, getStoreKeyName, graphQLResultHasError, hasClientExports, hasDirectives, isDevelopment, isEnv, isField, isIdValue, isInlineFragment, isJsonValue, isNumberValue, isProduction, isScalarValue, isTest, maybeDeepFreeze, mergeDeep, mergeDeepArray, removeArgumentsFromDocument, removeClientSetsFromDocument, removeConnectionDirectiveFromDocument, removeDirectivesFromDocument, removeFragmentSpreadFromDocument, resultKeyNameFromField, shouldInclude, storeKeyNameFromField, stripSymbols, toIdValue, tryFunctionOrLogError, valueFromNode, valueToObjectRepresentation, variablesInOperation, warnOnceInDevelopment */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getDirectiveInfoFromField", function() { return getDirectiveInfoFromField; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "shouldInclude", function() { return shouldInclude; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getDirectiveNames", function() { return getDirectiveNames; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "hasDirectives", function() { return hasDirectives; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "hasClientExports", function() { return hasClientExports; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getFragmentQueryDocument", function() { return getFragmentQueryDocument; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMutationDefinition", function() { return getMutationDefinition; });
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addTypenameToDocument", function() { return addTypenameToDocument; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "argumentsObjectFromField", function() { return argumentsObjectFromField; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "assign", function() { return assign; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "buildQueryFromSelectionSet", function() { return buildQueryFromSelectionSet; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "canUseWeakMap", function() { return canUseWeakMap; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "checkDocument", function() { return checkDocument; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "cloneDeep", function() { return cloneDeep; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createFragmentMap", function() { return createFragmentMap; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getDefaultValues", function() { return getDefaultValues; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getDirectiveInfoFromField", function() { return getDirectiveInfoFromField; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getDirectiveNames", function() { return getDirectiveNames; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getDirectivesFromDocument", function() { return getDirectivesFromDocument; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getEnv", function() { return getEnv; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getFragmentDefinition", function() { return getFragmentDefinition; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getFragmentDefinitions", function() { return getFragmentDefinitions; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getFragmentQueryDocument", function() { return getFragmentQueryDocument; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getInclusionDirectives", function() { return getInclusionDirectives; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMainDefinition", function() { return getMainDefinition; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMutationDefinition", function() { return getMutationDefinition; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getOperationDefinition", function() { return getOperationDefinition; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getOperationDefinitionOrDie", function() { return getOperationDefinitionOrDie; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getOperationName", function() { return getOperationName; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getFragmentDefinitions", function() { return getFragmentDefinitions; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getQueryDefinition", function() { return getQueryDefinition; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getFragmentDefinition", function() { return getFragmentDefinition; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMainDefinition", function() { return getMainDefinition; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createFragmentMap", function() { return createFragmentMap; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getDefaultValues", function() { return getDefaultValues; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "variablesInOperation", function() { return variablesInOperation; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeDirectivesFromDocument", function() { return removeDirectivesFromDocument; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addTypenameToDocument", function() { return addTypenameToDocument; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeConnectionDirectiveFromDocument", function() { return removeConnectionDirectiveFromDocument; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getDirectivesFromDocument", function() { return getDirectivesFromDocument; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeArgumentsFromDocument", function() { return removeArgumentsFromDocument; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeFragmentSpreadFromDocument", function() { return removeFragmentSpreadFromDocument; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "buildQueryFromSelectionSet", function() { return buildQueryFromSelectionSet; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeClientSetsFromDocument", function() { return removeClientSetsFromDocument; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isScalarValue", function() { return isScalarValue; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isNumberValue", function() { return isNumberValue; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "valueToObjectRepresentation", function() { return valueToObjectRepresentation; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "storeKeyNameFromField", function() { return storeKeyNameFromField; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getStoreKeyName", function() { return getStoreKeyName; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "argumentsObjectFromField", function() { return argumentsObjectFromField; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "resultKeyNameFromField", function() { return resultKeyNameFromField; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isField", function() { return isField; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isInlineFragment", function() { return isInlineFragment; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isIdValue", function() { return isIdValue; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toIdValue", function() { return toIdValue; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isJsonValue", function() { return isJsonValue; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "valueFromNode", function() { return valueFromNode; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "assign", function() { return assign; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "cloneDeep", function() { return cloneDeep; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getEnv", function() { return getEnv; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isEnv", function() { return isEnv; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isProduction", function() { return isProduction; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isDevelopment", function() { return isDevelopment; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isTest", function() { return isTest; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tryFunctionOrLogError", function() { return tryFunctionOrLogError; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "graphQLResultHasError", function() { return graphQLResultHasError; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isEqual", function() { return isEqual; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "hasClientExports", function() { return hasClientExports; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "hasDirectives", function() { return hasDirectives; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isDevelopment", function() { return isDevelopment; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isEnv", function() { return isEnv; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isField", function() { return isField; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isIdValue", function() { return isIdValue; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isInlineFragment", function() { return isInlineFragment; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isJsonValue", function() { return isJsonValue; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isNumberValue", function() { return isNumberValue; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isProduction", function() { return isProduction; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isScalarValue", function() { return isScalarValue; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isTest", function() { return isTest; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "maybeDeepFreeze", function() { return maybeDeepFreeze; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "mergeDeep", function() { return mergeDeep; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "mergeDeepArray", function() { return mergeDeepArray; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "warnOnceInDevelopment", function() { return warnOnceInDevelopment; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeArgumentsFromDocument", function() { return removeArgumentsFromDocument; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeClientSetsFromDocument", function() { return removeClientSetsFromDocument; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeConnectionDirectiveFromDocument", function() { return removeConnectionDirectiveFromDocument; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeDirectivesFromDocument", function() { return removeDirectivesFromDocument; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeFragmentSpreadFromDocument", function() { return removeFragmentSpreadFromDocument; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "resultKeyNameFromField", function() { return resultKeyNameFromField; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "shouldInclude", function() { return shouldInclude; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "storeKeyNameFromField", function() { return storeKeyNameFromField; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "stripSymbols", function() { return stripSymbols; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toIdValue", function() { return toIdValue; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tryFunctionOrLogError", function() { return tryFunctionOrLogError; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "valueFromNode", function() { return valueFromNode; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "valueToObjectRepresentation", function() { return valueToObjectRepresentation; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "variablesInOperation", function() { return variablesInOperation; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "warnOnceInDevelopment", function() { return warnOnceInDevelopment; });
 /* harmony import */ var graphql_language_visitor__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! graphql/language/visitor */ "./node_modules/graphql/language/visitor.mjs");
 /* harmony import */ var ts_invariant__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ts-invariant */ "./node_modules/ts-invariant/lib/invariant.esm.js");
 /* harmony import */ var tslib__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.js");
 /* harmony import */ var fast_json_stable_stringify__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! fast-json-stable-stringify */ "./node_modules/fast-json-stable-stringify/index.js");
 /* harmony import */ var fast_json_stable_stringify__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(fast_json_stable_stringify__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _wry_equality__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @wry/equality */ "./node_modules/@wry/equality/lib/equality.esm.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "isEqual", function() { return _wry_equality__WEBPACK_IMPORTED_MODULE_4__["equal"]; });
+
+
 
 
 
@@ -6185,37 +6221,18 @@ function getDirectiveInfoFromField(field, variables) {
 }
 function shouldInclude(selection, variables) {
     if (variables === void 0) { variables = {}; }
-    if (!selection.directives) {
-        return true;
-    }
-    var res = true;
-    selection.directives.forEach(function (directive) {
-        if (directive.name.value !== 'skip' && directive.name.value !== 'include') {
-            return;
-        }
-        var directiveArguments = directive.arguments || [];
-        var directiveName = directive.name.value;
-         false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_1__["invariant"])(directiveArguments.length === 1, "Incorrect number of arguments for the @" + directiveName + " directive.");
-        var ifArgument = directiveArguments[0];
-         false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_1__["invariant"])(ifArgument.name && ifArgument.name.value === 'if', "Invalid argument for the @" + directiveName + " directive.");
-        var ifValue = directiveArguments[0].value;
+    return getInclusionDirectives(selection.directives).every(function (_a) {
+        var directive = _a.directive, ifArgument = _a.ifArgument;
         var evaledValue = false;
-        if (!ifValue || ifValue.kind !== 'BooleanValue') {
-             false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_1__["invariant"])(ifValue.kind === 'Variable', "Argument for the @" + directiveName + " directive must be a variable or a boolean value.");
-            evaledValue = variables[ifValue.name.value];
-             false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_1__["invariant"])(evaledValue !== void 0, "Invalid variable referenced in @" + directiveName + " directive.");
+        if (ifArgument.value.kind === 'Variable') {
+            evaledValue = variables[ifArgument.value.name.value];
+             false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_1__["invariant"])(evaledValue !== void 0, "Invalid variable referenced in @" + directive.name.value + " directive.");
         }
         else {
-            evaledValue = ifValue.value;
+            evaledValue = ifArgument.value.value;
         }
-        if (directiveName === 'skip') {
-            evaledValue = !evaledValue;
-        }
-        if (!evaledValue) {
-            res = false;
-        }
+        return directive.name.value === 'skip' ? !evaledValue : evaledValue;
     });
-    return res;
 }
 function getDirectiveNames(doc) {
     var names = [];
@@ -6233,6 +6250,23 @@ function hasClientExports(document) {
     return (document &&
         hasDirectives(['client'], document) &&
         hasDirectives(['export'], document));
+}
+function isInclusionDirective(_a) {
+    var value = _a.name.value;
+    return value === 'skip' || value === 'include';
+}
+function getInclusionDirectives(directives) {
+    return directives ? directives.filter(isInclusionDirective).map(function (directive) {
+        var directiveArguments = directive.arguments;
+        var directiveName = directive.name.value;
+         false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_1__["invariant"])(directiveArguments && directiveArguments.length === 1, "Incorrect number of arguments for the @" + directiveName + " directive.");
+        var ifArgument = directiveArguments[0];
+         false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_1__["invariant"])(ifArgument.name && ifArgument.name.value === 'if', "Invalid argument for the @" + directiveName + " directive.");
+        var ifValue = ifArgument.value;
+         false ? undefined : Object(ts_invariant__WEBPACK_IMPORTED_MODULE_1__["invariant"])(ifValue &&
+            (ifValue.kind === 'Variable' || ifValue.kind === 'BooleanValue'), "Argument for the @" + directiveName + " directive must be a variable or a boolean value.");
+        return { directive: directive, ifArgument: ifArgument };
+    }) : [];
 }
 
 function getFragmentQueryDocument(document, fragmentName) {
@@ -6516,11 +6550,17 @@ function addTypenameToDocument(doc) {
                     return;
                 }
                 var skip = selections.some(function (selection) {
-                    return (selection.kind === 'Field' &&
+                    return (isField(selection) &&
                         (selection.name.value === '__typename' ||
                             selection.name.value.lastIndexOf('__', 0) === 0));
                 });
                 if (skip) {
+                    return;
+                }
+                var field = parent;
+                if (isField(field) &&
+                    field.directives &&
+                    field.directives.some(function (d) { return d.name.value === 'export'; })) {
                     return;
                 }
                 return Object(tslib__WEBPACK_IMPORTED_MODULE_2__["__assign"])({}, node, { selections: selections.concat([TYPENAME_FIELD]) });
@@ -6534,7 +6574,7 @@ var connectionRemoveConfig = {
         if (willRemove) {
             if (!directive.arguments ||
                 !directive.arguments.some(function (arg) { return arg.name.value === 'key'; })) {
-                console.warn('Removing an @connection directive even though it does not have a key. ' +
+                 false || ts_invariant__WEBPACK_IMPORTED_MODULE_1__["invariant"].warn('Removing an @connection directive even though it does not have a key. ' +
                     'You may want to use the key parameter to specify a store key.');
             }
         }
@@ -6554,7 +6594,7 @@ function hasDirectivesInSelectionSet(directives, selectionSet, nestedCheck) {
 }
 function hasDirectivesInSelection(directives, selection, nestedCheck) {
     if (nestedCheck === void 0) { nestedCheck = true; }
-    if (selection.kind !== 'Field' || !selection) {
+    if (!isField(selection)) {
         return true;
     }
     if (!selection.directives) {
@@ -6649,7 +6689,7 @@ function removeFragmentSpreadFromDocument(config, doc) {
 function getAllFragmentSpreadsFromSelectionSet(selectionSet) {
     var allFragments = [];
     selectionSet.selections.forEach(function (selection) {
-        if ((selection.kind === 'Field' || selection.kind === 'InlineFragment') &&
+        if ((isField(selection) || isInlineFragment(selection)) &&
             selection.selectionSet) {
             getAllFragmentSpreadsFromSelectionSet(selection.selectionSet).forEach(function (frag) { return allFragments.push(frag); });
         }
@@ -6688,8 +6728,7 @@ function removeClientSetsFromDocument(document) {
                 enter: function (node) {
                     if (node.selectionSet) {
                         var isTypenameOnly = node.selectionSet.selections.every(function (selection) {
-                            return (selection.kind === 'Field' &&
-                                selection.name.value === '__typename');
+                            return isField(selection) && selection.name.value === '__typename';
                         });
                         if (isTypenameOnly) {
                             return null;
@@ -6701,6 +6740,9 @@ function removeClientSetsFromDocument(document) {
     }
     return modifiedDoc;
 }
+
+var canUseWeakMap = typeof WeakMap === 'function' && !(typeof navigator === 'object' &&
+    navigator.product === 'ReactNative');
 
 var toString = Object.prototype.toString;
 function cloneDeep(value) {
@@ -6764,38 +6806,6 @@ function tryFunctionOrLogError(f) {
 }
 function graphQLResultHasError(result) {
     return result.errors && result.errors.length;
-}
-
-function isEqual(a, b) {
-    if (a === b) {
-        return true;
-    }
-    if (a instanceof Date && b instanceof Date) {
-        return a.getTime() === b.getTime();
-    }
-    if (a != null &&
-        typeof a === 'object' &&
-        b != null &&
-        typeof b === 'object') {
-        for (var key in a) {
-            if (Object.prototype.hasOwnProperty.call(a, key)) {
-                if (!Object.prototype.hasOwnProperty.call(b, key)) {
-                    return false;
-                }
-                if (!isEqual(a[key], b[key])) {
-                    return false;
-                }
-            }
-        }
-        for (var key in b) {
-            if (Object.prototype.hasOwnProperty.call(b, key) &&
-                !Object.prototype.hasOwnProperty.call(a, key)) {
-                return false;
-            }
-        }
-        return true;
-    }
-    return false;
 }
 
 function deepFreeze(o) {
@@ -6881,19 +6891,15 @@ function shallowCopyForMerge(value, pastCopies) {
 var haveWarned = Object.create({});
 function warnOnceInDevelopment(msg, type) {
     if (type === void 0) { type = 'warn'; }
-    if (isProduction()) {
-        return;
-    }
-    if (!haveWarned[msg]) {
+    if (!isProduction() && !haveWarned[msg]) {
         if (!isTest()) {
             haveWarned[msg] = true;
         }
-        switch (type) {
-            case 'error':
-                console.error(msg);
-                break;
-            default:
-                console.warn(msg);
+        if (type === 'error') {
+            console.error(msg);
+        }
+        else {
+            console.warn(msg);
         }
     }
 }
@@ -7708,7 +7714,7 @@ module.exports = function (NAME, wrapper, methods, common, IS_MAP, IS_WEAK) {
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-var core = module.exports = { version: '2.6.5' };
+var core = module.exports = { version: '2.6.9' };
 if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
 
 
@@ -8537,6 +8543,7 @@ module.exports.f = function (C) {
 "use strict";
 
 // 19.1.2.1 Object.assign(target, source, ...)
+var DESCRIPTORS = __webpack_require__(/*! ./_descriptors */ "./node_modules/core-js/library/modules/_descriptors.js");
 var getKeys = __webpack_require__(/*! ./_object-keys */ "./node_modules/core-js/library/modules/_object-keys.js");
 var gOPS = __webpack_require__(/*! ./_object-gops */ "./node_modules/core-js/library/modules/_object-gops.js");
 var pIE = __webpack_require__(/*! ./_object-pie */ "./node_modules/core-js/library/modules/_object-pie.js");
@@ -8566,7 +8573,10 @@ module.exports = !$assign || __webpack_require__(/*! ./_fails */ "./node_modules
     var length = keys.length;
     var j = 0;
     var key;
-    while (length > j) if (isEnum.call(S, key = keys[j++])) T[key] = S[key];
+    while (length > j) {
+      key = keys[j++];
+      if (!DESCRIPTORS || isEnum.call(S, key)) T[key] = S[key];
+    }
   } return T;
 } : $assign;
 
@@ -10225,12 +10235,14 @@ var enumKeys = __webpack_require__(/*! ./_enum-keys */ "./node_modules/core-js/l
 var isArray = __webpack_require__(/*! ./_is-array */ "./node_modules/core-js/library/modules/_is-array.js");
 var anObject = __webpack_require__(/*! ./_an-object */ "./node_modules/core-js/library/modules/_an-object.js");
 var isObject = __webpack_require__(/*! ./_is-object */ "./node_modules/core-js/library/modules/_is-object.js");
+var toObject = __webpack_require__(/*! ./_to-object */ "./node_modules/core-js/library/modules/_to-object.js");
 var toIObject = __webpack_require__(/*! ./_to-iobject */ "./node_modules/core-js/library/modules/_to-iobject.js");
 var toPrimitive = __webpack_require__(/*! ./_to-primitive */ "./node_modules/core-js/library/modules/_to-primitive.js");
 var createDesc = __webpack_require__(/*! ./_property-desc */ "./node_modules/core-js/library/modules/_property-desc.js");
 var _create = __webpack_require__(/*! ./_object-create */ "./node_modules/core-js/library/modules/_object-create.js");
 var gOPNExt = __webpack_require__(/*! ./_object-gopn-ext */ "./node_modules/core-js/library/modules/_object-gopn-ext.js");
 var $GOPD = __webpack_require__(/*! ./_object-gopd */ "./node_modules/core-js/library/modules/_object-gopd.js");
+var $GOPS = __webpack_require__(/*! ./_object-gops */ "./node_modules/core-js/library/modules/_object-gops.js");
 var $DP = __webpack_require__(/*! ./_object-dp */ "./node_modules/core-js/library/modules/_object-dp.js");
 var $keys = __webpack_require__(/*! ./_object-keys */ "./node_modules/core-js/library/modules/_object-keys.js");
 var gOPD = $GOPD.f;
@@ -10247,7 +10259,7 @@ var SymbolRegistry = shared('symbol-registry');
 var AllSymbols = shared('symbols');
 var OPSymbols = shared('op-symbols');
 var ObjectProto = Object[PROTOTYPE];
-var USE_NATIVE = typeof $Symbol == 'function';
+var USE_NATIVE = typeof $Symbol == 'function' && !!$GOPS.f;
 var QObject = global.QObject;
 // Don't use setters in Qt Script, https://github.com/zloirock/core-js/issues/173
 var setter = !QObject || !QObject[PROTOTYPE] || !QObject[PROTOTYPE].findChild;
@@ -10357,7 +10369,7 @@ if (!USE_NATIVE) {
   $DP.f = $defineProperty;
   __webpack_require__(/*! ./_object-gopn */ "./node_modules/core-js/library/modules/_object-gopn.js").f = gOPNExt.f = $getOwnPropertyNames;
   __webpack_require__(/*! ./_object-pie */ "./node_modules/core-js/library/modules/_object-pie.js").f = $propertyIsEnumerable;
-  __webpack_require__(/*! ./_object-gops */ "./node_modules/core-js/library/modules/_object-gops.js").f = $getOwnPropertySymbols;
+  $GOPS.f = $getOwnPropertySymbols;
 
   if (DESCRIPTORS && !__webpack_require__(/*! ./_library */ "./node_modules/core-js/library/modules/_library.js")) {
     redefine(ObjectProto, 'propertyIsEnumerable', $propertyIsEnumerable, true);
@@ -10406,6 +10418,16 @@ $export($export.S + $export.F * !USE_NATIVE, 'Object', {
   getOwnPropertyNames: $getOwnPropertyNames,
   // 19.1.2.8 Object.getOwnPropertySymbols(O)
   getOwnPropertySymbols: $getOwnPropertySymbols
+});
+
+// Chrome 38 and 39 `Object.getOwnPropertySymbols` fails on primitives
+// https://bugs.chromium.org/p/v8/issues/detail?id=3443
+var FAILS_ON_PRIMITIVES = $fails(function () { $GOPS.f(1); });
+
+$export($export.S + $export.F * FAILS_ON_PRIMITIVES, 'Object', {
+  getOwnPropertySymbols: function getOwnPropertySymbols(it) {
+    return $GOPS.f(toObject(it));
+  }
 });
 
 // 24.3.2 JSON.stringify(value [, replacer [, space]])
@@ -10869,6 +10891,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GraphQLError", function() { return GraphQLError; });
 /* harmony import */ var _printError__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./printError */ "./node_modules/graphql/error/printError.mjs");
 /* harmony import */ var _language_location__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../language/location */ "./node_modules/graphql/language/location.mjs");
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
 /**
  * Copyright (c) Facebook, Inc. and its affiliates.
  *
@@ -10878,6 +10902,13 @@ __webpack_require__.r(__webpack_exports__);
  * 
  */
 
+
+/**
+ * A GraphQLError describes an Error found during the parse, validate, or
+ * execute phases of performing a GraphQL operation. In addition to a message
+ * and stack trace, it also includes information about the locations in a
+ * GraphQL document and/or execution result that correspond to the Error.
+ */
 
 function GraphQLError( // eslint-disable-line no-redeclare
 message, nodes, source, positions, path, originalError, extensions) {
@@ -10924,7 +10955,15 @@ message, nodes, source, positions, path, originalError, extensions) {
     }, []);
   }
 
-  var _extensions = extensions || originalError && originalError.extensions;
+  var _extensions = extensions;
+
+  if (_extensions == null && originalError != null) {
+    var originalExtensions = originalError.extensions;
+
+    if (originalExtensions != null && _typeof(originalExtensions) === 'object') {
+      _extensions = originalExtensions;
+    }
+  }
 
   Object.defineProperties(this, {
     message: {
@@ -11006,6 +11045,7 @@ GraphQLError.prototype = Object.create(Error.prototype, {
   }
 });
 
+
 /***/ }),
 
 /***/ "./node_modules/graphql/error/formatError.mjs":
@@ -11051,6 +11091,7 @@ function formatError(error) {
   };
 }
 
+
 /***/ }),
 
 /***/ "./node_modules/graphql/error/index.mjs":
@@ -11085,6 +11126,7 @@ __webpack_require__.r(__webpack_exports__);
  *
  * 
  */
+
 
 
 
@@ -11128,6 +11170,7 @@ function locatedError(originalError, nodes, path) {
 
   return new _GraphQLError__WEBPACK_IMPORTED_MODULE_0__["GraphQLError"](originalError && originalError.message, originalError && originalError.nodes || nodes, originalError && originalError.source, originalError && originalError.positions, path, originalError);
 }
+
 
 /***/ }),
 
@@ -11280,6 +11323,7 @@ function lpad(len, str) {
   return whitespace(len - str.length) + str;
 }
 
+
 /***/ }),
 
 /***/ "./node_modules/graphql/error/syntaxError.mjs":
@@ -11310,6 +11354,7 @@ __webpack_require__.r(__webpack_exports__);
 function syntaxError(source, position, description) {
   return new _GraphQLError__WEBPACK_IMPORTED_MODULE_0__["GraphQLError"]("Syntax Error: ".concat(description), undefined, source, [position]);
 }
+
 
 /***/ }),
 
@@ -11348,6 +11393,7 @@ classObject) {
     classObject.prototype[_nodejsCustomInspectSymbol__WEBPACK_IMPORTED_MODULE_0__["default"]] = fn;
   }
 }
+
 
 /***/ }),
 
@@ -11392,6 +11438,7 @@ function defineToStringTag(classObject) {
     });
   }
 }
+
 
 /***/ }),
 
@@ -11453,7 +11500,7 @@ function formatObjectValue(value, previouslySeenValues) {
   if (value) {
     var customInspectFn = getCustomFn(value);
 
-    if (customInspectFn) {
+    if (customInspectFn !== undefined) {
       // $FlowFixMe(>=0.90.0)
       var customValue = customInspectFn.call(value); // check for infinite recursion
 
@@ -11540,6 +11587,7 @@ function getObjectTag(object) {
   return tag;
 }
 
+
 /***/ }),
 
 /***/ "./node_modules/graphql/jsutils/invariant.mjs":
@@ -11561,11 +11609,14 @@ __webpack_require__.r(__webpack_exports__);
  * 
  */
 function invariant(condition, message) {
+  var booleanCondition = Boolean(condition);
   /* istanbul ignore else */
-  if (!condition) {
+
+  if (!booleanCondition) {
     throw new Error(message);
   }
 }
+
 
 /***/ }),
 
@@ -11589,18 +11640,20 @@ __webpack_require__.r(__webpack_exports__);
 var nodejsCustomInspectSymbol = typeof Symbol === 'function' ? Symbol.for('nodejs.util.inspect.custom') : undefined;
 /* harmony default export */ __webpack_exports__["default"] = (nodejsCustomInspectSymbol);
 
+
 /***/ }),
 
 /***/ "./node_modules/graphql/language/blockString.mjs":
 /*!*******************************************************!*\
   !*** ./node_modules/graphql/language/blockString.mjs ***!
   \*******************************************************/
-/*! exports provided: dedentBlockStringValue, printBlockString */
+/*! exports provided: dedentBlockStringValue, getBlockStringIndentation, printBlockString */
 /***/ (function(__webpack_module__, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "dedentBlockStringValue", function() { return dedentBlockStringValue; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getBlockStringIndentation", function() { return getBlockStringIndentation; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "printBlockString", function() { return printBlockString; });
 /**
  * Copyright (c) Facebook, Inc. and its affiliates.
@@ -11621,24 +11674,11 @@ function dedentBlockStringValue(rawString) {
   // Expand a block string's raw value into independent lines.
   var lines = rawString.split(/\r\n|[\n\r]/g); // Remove common indentation from all lines but first.
 
-  var commonIndent = null;
+  var commonIndent = getBlockStringIndentation(lines);
 
-  for (var i = 1; i < lines.length; i++) {
-    var line = lines[i];
-    var indent = leadingWhitespace(line);
-
-    if (indent < line.length && (commonIndent === null || indent < commonIndent)) {
-      commonIndent = indent;
-
-      if (commonIndent === 0) {
-        break;
-      }
-    }
-  }
-
-  if (commonIndent) {
-    for (var _i = 1; _i < lines.length; _i++) {
-      lines[_i] = lines[_i].slice(commonIndent);
+  if (commonIndent !== 0) {
+    for (var i = 1; i < lines.length; i++) {
+      lines[i] = lines[i].slice(commonIndent);
     }
   } // Remove leading and trailing blank lines.
 
@@ -11653,6 +11693,29 @@ function dedentBlockStringValue(rawString) {
 
 
   return lines.join('\n');
+} // @internal
+
+function getBlockStringIndentation(lines) {
+  var commonIndent = null;
+
+  for (var i = 1; i < lines.length; i++) {
+    var line = lines[i];
+    var indent = leadingWhitespace(line);
+
+    if (indent === line.length) {
+      continue; // skip empty lines
+    }
+
+    if (commonIndent === null || indent < commonIndent) {
+      commonIndent = indent;
+
+      if (commonIndent === 0) {
+        break;
+      }
+    }
+  }
+
+  return commonIndent === null ? 0 : commonIndent;
 }
 
 function leadingWhitespace(str) {
@@ -11696,6 +11759,7 @@ function printBlockString(value) {
 
   return '"""' + result.replace(/"""/g, '\\"""') + '"""';
 }
+
 
 /***/ }),
 
@@ -11747,6 +11811,7 @@ var DirectiveLocation = Object.freeze({
 /**
  * The enum type representing the directive location values.
  */
+
 
 /***/ }),
 
@@ -11832,19 +11897,21 @@ var Kind = Object.freeze({
  * The enum type representing the possible kind values of AST nodes.
  */
 
+
 /***/ }),
 
 /***/ "./node_modules/graphql/language/lexer.mjs":
 /*!*************************************************!*\
   !*** ./node_modules/graphql/language/lexer.mjs ***!
   \*************************************************/
-/*! exports provided: createLexer, TokenKind, getTokenDesc */
+/*! exports provided: createLexer, TokenKind, isPunctuatorToken, getTokenDesc */
 /***/ (function(__webpack_module__, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createLexer", function() { return createLexer; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "TokenKind", function() { return TokenKind; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isPunctuatorToken", function() { return isPunctuatorToken; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getTokenDesc", function() { return getTokenDesc; });
 /* harmony import */ var _jsutils_defineToJSON__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../jsutils/defineToJSON */ "./node_modules/graphql/jsutils/defineToJSON.mjs");
 /* harmony import */ var _error__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../error */ "./node_modules/graphql/error/index.mjs");
@@ -11939,9 +12006,15 @@ var TokenKind = Object.freeze({
  * The enum type representing the token kinds values.
  */
 
+// @internal
+function isPunctuatorToken(token) {
+  var kind = token.kind;
+  return kind === TokenKind.BANG || kind === TokenKind.DOLLAR || kind === TokenKind.AMP || kind === TokenKind.PAREN_L || kind === TokenKind.PAREN_R || kind === TokenKind.SPREAD || kind === TokenKind.COLON || kind === TokenKind.EQUALS || kind === TokenKind.AT || kind === TokenKind.BRACKET_L || kind === TokenKind.BRACKET_R || kind === TokenKind.BRACE_L || kind === TokenKind.PIPE || kind === TokenKind.BRACE_R;
+}
 /**
  * A helper function to describe a token as a string for debugging
  */
+
 function getTokenDesc(token) {
   var value = token.value;
   return value ? "".concat(token.kind, " \"").concat(value, "\"") : token.kind;
@@ -12365,16 +12438,18 @@ function readString(source, start, line, col, prev) {
           break;
 
         case 117:
-          // u
-          var charCode = uniCharCode(body.charCodeAt(position + 1), body.charCodeAt(position + 2), body.charCodeAt(position + 3), body.charCodeAt(position + 4));
+          {
+            // uXXXX
+            var charCode = uniCharCode(body.charCodeAt(position + 1), body.charCodeAt(position + 2), body.charCodeAt(position + 3), body.charCodeAt(position + 4));
 
-          if (charCode < 0) {
-            throw Object(_error__WEBPACK_IMPORTED_MODULE_1__["syntaxError"])(source, position, 'Invalid character escape sequence: ' + "\\u".concat(body.slice(position + 1, position + 5), "."));
+            if (charCode < 0) {
+              throw Object(_error__WEBPACK_IMPORTED_MODULE_1__["syntaxError"])(source, position, 'Invalid character escape sequence: ' + "\\u".concat(body.slice(position + 1, position + 5), "."));
+            }
+
+            value += String.fromCharCode(charCode);
+            position += 4;
+            break;
           }
-
-          value += String.fromCharCode(charCode);
-          position += 4;
-          break;
 
         default:
           throw Object(_error__WEBPACK_IMPORTED_MODULE_1__["syntaxError"])(source, position, "Invalid character escape sequence: \\".concat(String.fromCharCode(code), "."));
@@ -12495,6 +12570,7 @@ function readName(source, start, line, col, prev) {
   return new Tok(TokenKind.NAME, start, position, line, col, prev, body.slice(start, position));
 }
 
+
 /***/ }),
 
 /***/ "./node_modules/graphql/language/location.mjs":
@@ -12540,6 +12616,7 @@ function getLocation(source, position) {
     column: column
   };
 }
+
 
 /***/ }),
 
@@ -13919,7 +13996,7 @@ function parseDirectiveLocation(lexer) {
   var start = lexer.token;
   var name = parseName(lexer);
 
-  if (_directiveLocation__WEBPACK_IMPORTED_MODULE_6__["DirectiveLocation"].hasOwnProperty(name.value)) {
+  if (_directiveLocation__WEBPACK_IMPORTED_MODULE_6__["DirectiveLocation"][name.value] !== undefined) {
     return name;
   }
 
@@ -14070,6 +14147,7 @@ function many(lexer, openKind, parseFn, closeKind) {
 
   return nodes;
 }
+
 
 /***/ }),
 
@@ -14393,6 +14471,7 @@ function hasMultilineItems(maybeArray) {
   return maybeArray && maybeArray.some(isMultiline);
 }
 
+
 /***/ }),
 
 /***/ "./node_modules/graphql/language/source.mjs":
@@ -14438,6 +14517,7 @@ var Source = function Source(body, name, locationOffset) {
 }; // Conditionally apply `[Symbol.toStringTag]` if `Symbol`s are supported
 
 Object(_jsutils_defineToStringTag__WEBPACK_IMPORTED_MODULE_1__["default"])(Source);
+
 
 /***/ }),
 
@@ -14634,10 +14714,8 @@ function visit(root, visitor) {
         } else {
           var clone = {};
 
-          var _arr = Object.keys(node);
-
-          for (var _i = 0; _i < _arr.length; _i++) {
-            var k = _arr[_i];
+          for (var _i = 0, _Object$keys = Object.keys(node); _i < _Object$keys.length; _i++) {
+            var k = _Object$keys[_i];
             clone[k] = node[k];
           }
 
@@ -14890,6 +14968,7 @@ function getVisitFn(visitor, kind, isLeaving) {
   }
 }
 
+
 /***/ }),
 
 /***/ "./node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js":
@@ -14933,11 +15012,30 @@ var KNOWN_STATICS = {
 
 var FORWARD_REF_STATICS = {
     '$$typeof': true,
-    render: true
+    render: true,
+    defaultProps: true,
+    displayName: true,
+    propTypes: true
+};
+
+var MEMO_STATICS = {
+    '$$typeof': true,
+    compare: true,
+    defaultProps: true,
+    displayName: true,
+    propTypes: true,
+    type: true
 };
 
 var TYPE_STATICS = {};
 TYPE_STATICS[ReactIs.ForwardRef] = FORWARD_REF_STATICS;
+
+function getStatics(component) {
+    if (ReactIs.isMemo(component)) {
+        return MEMO_STATICS;
+    }
+    return TYPE_STATICS[component['$$typeof']] || REACT_STATICS;
+}
 
 var defineProperty = Object.defineProperty;
 var getOwnPropertyNames = Object.getOwnPropertyNames;
@@ -14963,8 +15061,8 @@ function hoistNonReactStatics(targetComponent, sourceComponent, blacklist) {
             keys = keys.concat(getOwnPropertySymbols(sourceComponent));
         }
 
-        var targetStatics = TYPE_STATICS[targetComponent['$$typeof']] || REACT_STATICS;
-        var sourceStatics = TYPE_STATICS[sourceComponent['$$typeof']] || REACT_STATICS;
+        var targetStatics = getStatics(targetComponent);
+        var sourceStatics = getStatics(sourceComponent);
 
         for (var i = 0; i < keys.length; ++i) {
             var key = keys[i];
@@ -14988,273 +15086,6 @@ module.exports = hoistNonReactStatics;
 
 /***/ }),
 
-/***/ "./node_modules/immutable-tuple/dist/tuple.mjs":
-/*!*****************************************************!*\
-  !*** ./node_modules/immutable-tuple/dist/tuple.mjs ***!
-  \*****************************************************/
-/*! exports provided: default, tuple, lookup, lookupArray */
-/***/ (function(__webpack_module__, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tuple", function() { return tuple; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "lookup", function() { return lookup; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "lookupArray", function() { return lookupArray; });
-// Although `Symbol` is widely supported these days, we can safely fall
-// back to using a non-enumerable string property without violating any
-// assumptions elsewhere in the implementation.
-var useSymbol =
-  typeof Symbol === "function" &&
-  typeof Symbol.for === "function";
-
-// Used to mark `tuple.prototype` so that all objects that inherit from
-// any `tuple.prototype` object (there could be more than one) will test
-// positive according to `tuple.isTuple`.
-var brand = useSymbol
-  ? Symbol.for("immutable-tuple")
-  : "@@__IMMUTABLE_TUPLE__@@";
-
-// Used to save a reference to the globally shared `UniversalWeakMap` that
-// stores all known `tuple` objects.
-var globalKey = useSymbol
-  ? Symbol.for("immutable-tuple-root")
-  : "@@__IMMUTABLE_TUPLE_ROOT__@@";
-
-// Convenient helper for defining hidden immutable properties.
-function def(obj, name, value, enumerable) {
-  Object.defineProperty(obj, name, {
-    value: value,
-    enumerable: !! enumerable,
-    writable: false,
-    configurable: false
-  });
-  return value;
-}
-
-var freeze = Object.freeze || function (obj) {
-  return obj;
-};
-
-function isObjRef(value) {
-  switch (typeof value) {
-  case "object":
-    if (value === null) {
-      return false;
-    }
-  case "function":
-    return true;
-  default:
-    return false;
-  }
-}
-
-// The `mustConvertThisToArray` value is true when the corresponding
-// `Array` method does not attempt to modify `this`, which means we can
-// pass a `tuple` object as `this` without first converting it to an
-// `Array`.
-function forEachArrayMethod(fn) {
-  function call(name, mustConvertThisToArray) {
-    var desc = Object.getOwnPropertyDescriptor(Array.prototype, name);
-    fn(name, desc, !! mustConvertThisToArray);
-  }
-
-  call("every");
-  call("filter");
-  call("find");
-  call("findIndex");
-  call("forEach");
-  call("includes");
-  call("indexOf");
-  call("join");
-  call("lastIndexOf");
-  call("map");
-  call("reduce");
-  call("reduceRight");
-  call("slice");
-  call("some");
-  call("toLocaleString");
-  call("toString");
-
-  // The `reverse` and `sort` methods are usually destructive, but for
-  // `tuple` objects they return a new `tuple` object that has been
-  // appropriately reversed/sorted.
-  call("reverse", true);
-  call("sort", true);
-
-  // Make `[...someTuple]` work.
-  call(useSymbol && Symbol.iterator || "@@iterator");
-}
-
-// A map data structure that holds object keys weakly, yet can also hold
-// non-object keys, unlike the native `WeakMap`.
-var UniversalWeakMap = function UniversalWeakMap() {
-  // Since a `WeakMap` cannot hold primitive values as keys, we need a
-  // backup `Map` instance to hold primitive keys. Both `this._weakMap`
-  // and `this._strongMap` are lazily initialized.
-  this._weakMap = null;
-  this._strongMap = null;
-  this.data = null;
-};
-
-// Since `get` and `set` are the only methods used, that's all I've
-// implemented here.
-
-UniversalWeakMap.prototype.get = function get (key) {
-  var map = this._getMap(key, false);
-  if (map) {
-    return map.get(key);
-  }
-};
-
-UniversalWeakMap.prototype.set = function set (key, value) {
-  this._getMap(key, true).set(key, value);
-  // An actual `Map` or `WeakMap` would return `this` here, but
-  // returning the `value` is more convenient for the `tuple`
-  // implementation.
-  return value;
-};
-
-UniversalWeakMap.prototype._getMap = function _getMap (key, canCreate) {
-  if (! canCreate) {
-    return isObjRef(key) ? this._weakMap : this._strongMap;
-  }
-  if (isObjRef(key)) {
-    return this._weakMap || (this._weakMap = new WeakMap);
-  }
-  return this._strongMap || (this._strongMap = new Map);
-};
-
-// See [`universal-weak-map.js`](universal-weak-map.html).
-// See [`util.js`](util.html).
-// If this package is installed multiple times, there could be mutiple
-// implementations of the `tuple` function with distinct `tuple.prototype`
-// objects, but the shared pool of `tuple` objects must be the same across
-// all implementations. While it would be ideal to use the `global`
-// object, there's no reliable way to get the global object across all JS
-// environments without using the `Function` constructor, so instead we
-// use the global `Array` constructor as a shared namespace.
-var root = Array[globalKey] || def(Array, globalKey, new UniversalWeakMap, false);
-
-function lookup() {
-  return lookupArray(arguments);
-}
-
-function lookupArray(array) {
-  var node = root;
-
-  // Because we are building a tree of *weak* maps, the tree will not
-  // prevent objects in tuples from being garbage collected, since the
-  // tree itself will be pruned over time when the corresponding `tuple`
-  // objects become unreachable. In addition to internalization, this
-  // property is a key advantage of the `immutable-tuple` package.
-  var len = array.length;
-  for (var i = 0; i < len; ++i) {
-    var item = array[i];
-    node = node.get(item) || node.set(item, new UniversalWeakMap);
-  }
-
-  // Return node.data rather than node itself to prevent tampering with
-  // the UniversalWeakMap tree.
-  return node.data || (node.data = Object.create(null));
-}
-
-// See [`lookup.js`](lookup.html).
-// See [`util.js`](util.html).
-// When called with any number of arguments, this function returns an
-// object that inherits from `tuple.prototype` and is guaranteed to be
-// `===` any other `tuple` object that has exactly the same items. In
-// computer science jargon, `tuple` instances are "internalized" or just
-// "interned," which allows for constant-time equality checking, and makes
-// it possible for tuple objects to be used as `Map` or `WeakMap` keys, or
-// stored in a `Set`.
-function tuple() {
-  var arguments$1 = arguments;
-
-  var node = lookup.apply(null, arguments);
-
-  if (node.tuple) {
-    return node.tuple;
-  }
-
-  var t = Object.create(tuple.prototype);
-
-  // Define immutable items with numeric indexes, and permanently fix the
-  // `.length` property.
-  var argc = arguments.length;
-  for (var i = 0; i < argc; ++i) {
-    t[i] = arguments$1[i];
-  }
-
-  def(t, "length", argc, false);
-
-  // Remember this new `tuple` object so that we can return the same object
-  // earlier next time.
-  return freeze(node.tuple = t);
-}
-
-// Since the `immutable-tuple` package could be installed multiple times
-// in an application, there is no guarantee that the `tuple` constructor
-// or `tuple.prototype` will be unique, so `value instanceof tuple` is
-// unreliable. Instead, to test if a value is a tuple, you should use
-// `tuple.isTuple(value)`.
-def(tuple.prototype, brand, true, false);
-function isTuple(that) {
-  return !! (that && that[brand] === true);
-}
-
-tuple.isTuple = isTuple;
-
-function toArray(tuple) {
-  var array = [];
-  var i = tuple.length;
-  while (i--) { array[i] = tuple[i]; }
-  return array;
-}
-
-// Copy all generic non-destructive Array methods to `tuple.prototype`.
-// This works because (for example) `Array.prototype.slice` can be invoked
-// against any `Array`-like object.
-forEachArrayMethod(function (name, desc, mustConvertThisToArray) {
-  var method = desc && desc.value;
-  if (typeof method === "function") {
-    desc.value = function () {
-      var args = [], len = arguments.length;
-      while ( len-- ) args[ len ] = arguments[ len ];
-
-      var result = method.apply(
-        mustConvertThisToArray ? toArray(this) : this,
-        args
-      );
-      // Of course, `tuple.prototype.slice` should return a `tuple` object,
-      // not a new `Array`.
-      return Array.isArray(result) ? tuple.apply(void 0, result) : result;
-    };
-    Object.defineProperty(tuple.prototype, name, desc);
-  }
-});
-
-// Like `Array.prototype.concat`, except for the extra effort required to
-// convert any tuple arguments to arrays, so that
-// ```
-// tuple(1).concat(tuple(2), 3) === tuple(1, 2, 3)
-// ```
-var ref = Array.prototype;
-var concat = ref.concat;
-tuple.prototype.concat = function () {
-  var args = [], len = arguments.length;
-  while ( len-- ) args[ len ] = arguments[ len ];
-
-  return tuple.apply(void 0, concat.apply(toArray(this), args.map(
-    function (item) { return isTuple(item) ? toArray(item) : item; }
-  )));
-};
-
-/* harmony default export */ __webpack_exports__["default"] = (tuple);
-
-
-
-/***/ }),
-
 /***/ "./node_modules/isomorphic-unfetch/browser.js":
 /*!****************************************************!*\
   !*** ./node_modules/isomorphic-unfetch/browser.js ***!
@@ -15262,22 +15093,7 @@ tuple.prototype.concat = function () {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = window.fetch || (window.fetch = __webpack_require__(/*! unfetch */ "./node_modules/isomorphic-unfetch/node_modules/unfetch/dist/unfetch.mjs").default || __webpack_require__(/*! unfetch */ "./node_modules/isomorphic-unfetch/node_modules/unfetch/dist/unfetch.mjs"));
-
-
-/***/ }),
-
-/***/ "./node_modules/isomorphic-unfetch/node_modules/unfetch/dist/unfetch.mjs":
-/*!*******************************************************************************!*\
-  !*** ./node_modules/isomorphic-unfetch/node_modules/unfetch/dist/unfetch.mjs ***!
-  \*******************************************************************************/
-/*! exports provided: default */
-/***/ (function(__webpack_module__, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = (function(e,n){return n=n||{},new Promise(function(t,r){var s=new XMLHttpRequest,o=[],u=[],i={},a=function(){return{ok:2==(s.status/100|0),statusText:s.statusText,status:s.status,url:s.responseURL,text:function(){return Promise.resolve(s.responseText)},json:function(){return Promise.resolve(JSON.parse(s.responseText))},blob:function(){return Promise.resolve(new Blob([s.response]))},clone:a,headers:{keys:function(){return o},entries:function(){return u},get:function(e){return i[e.toLowerCase()]},has:function(e){return e.toLowerCase()in i}}}};for(var l in s.open(n.method||"get",e,!0),s.onload=function(){s.getAllResponseHeaders().replace(/^(.*?):[^\S\n]*([\s\S]*?)$/gm,function(e,n,t){o.push(n=n.toLowerCase()),u.push([n,t]),i[n]=i[n]?i[n]+","+t:t}),t(a())},s.onerror=r,s.withCredentials="include"==n.credentials,n.headers)s.setRequestHeader(l,n.headers[l]);s.send(n.body||null)})});
-//# sourceMappingURL=unfetch.mjs.map
+module.exports = window.fetch || (window.fetch = __webpack_require__(/*! unfetch */ "./node_modules/unfetch/dist/unfetch.mjs").default || __webpack_require__(/*! unfetch */ "./node_modules/unfetch/dist/unfetch.mjs"));
 
 
 /***/ }),
@@ -17142,6 +16958,104 @@ module.exports = isEqual;
 
 /***/ }),
 
+/***/ "./node_modules/next-server/dist/lib/amp.js":
+/*!**************************************************!*\
+  !*** ./node_modules/next-server/dist/lib/amp.js ***!
+  \**************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var react_1 = __importDefault(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
+
+var amphtml_context_1 = __webpack_require__(/*! ./amphtml-context */ "./node_modules/next-server/dist/lib/amphtml-context.js");
+
+function isAmp() {
+  var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+      _ref$enabled = _ref.enabled,
+      enabled = _ref$enabled === void 0 ? false : _ref$enabled,
+      _ref$hybrid = _ref.hybrid,
+      hybrid = _ref$hybrid === void 0 ? false : _ref$hybrid,
+      _ref$hasQuery = _ref.hasQuery,
+      hasQuery = _ref$hasQuery === void 0 ? false : _ref$hasQuery;
+
+  return enabled && (!hybrid || hybrid && hasQuery);
+}
+
+exports.isAmp = isAmp;
+
+function useAmp() {
+  var ampMode = react_1.default.useContext(amphtml_context_1.AmpModeContext); // un-comment below to not be considered AMP in dirty mode
+
+  return isAmp(ampMode); // && ampMode.hasQuery
+}
+
+exports.useAmp = useAmp;
+
+function withAmp(Component) {
+  var _ref2 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+      _ref2$hybrid = _ref2.hybrid,
+      hybrid = _ref2$hybrid === void 0 ? false : _ref2$hybrid;
+
+  function WithAmpWrapper() {
+    var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    var ampMode = react_1.default.useContext(amphtml_context_1.AmpModeContext);
+    ampMode.enabled = true;
+    ampMode.hybrid = hybrid;
+    return react_1.default.createElement(Component, props);
+  }
+
+  WithAmpWrapper.__nextAmpOnly = !hybrid;
+  WithAmpWrapper.getInitialProps = Component.getInitialProps;
+  return WithAmpWrapper;
+}
+
+exports.withAmp = withAmp;
+
+/***/ }),
+
+/***/ "./node_modules/next-server/dist/lib/amphtml-context.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/next-server/dist/lib/amphtml-context.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var __importStar = void 0 && (void 0).__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+  }
+  result["default"] = mod;
+  return result;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var React = __importStar(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
+
+exports.AmpModeContext = React.createContext({});
+
+/***/ }),
+
 /***/ "./node_modules/next-server/dist/lib/head-manager-context.js":
 /*!*******************************************************************!*\
   !*** ./node_modules/next-server/dist/lib/head-manager-context.js ***!
@@ -17200,15 +17114,31 @@ var react_1 = __importDefault(__webpack_require__(/*! react */ "./node_modules/r
 
 var side_effect_1 = __importDefault(__webpack_require__(/*! ./side-effect */ "./node_modules/next-server/dist/lib/side-effect.js"));
 
+var amphtml_context_1 = __webpack_require__(/*! ./amphtml-context */ "./node_modules/next-server/dist/lib/amphtml-context.js");
+
 var head_manager_context_1 = __webpack_require__(/*! ./head-manager-context */ "./node_modules/next-server/dist/lib/head-manager-context.js");
+
+var amp_1 = __webpack_require__(/*! ./amp */ "./node_modules/next-server/dist/lib/amp.js");
 
 function defaultHead() {
   var className = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'next-head';
-  return [react_1.default.createElement("meta", {
+  var isAmp = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+  var head = [react_1.default.createElement("meta", {
     key: "charSet",
     charSet: "utf-8",
     className: className
   })];
+
+  if (!isAmp) {
+    head.push(react_1.default.createElement("meta", {
+      key: "viewport",
+      name: "viewport",
+      content: "width=device-width,minimum-scale=1,initial-scale=1",
+      className: className
+    }));
+  }
+
+  return head;
 }
 
 exports.defaultHead = defaultHead;
@@ -17233,7 +17163,7 @@ function onlyReactElement(list, child) {
   return list.concat(child);
 }
 
-var METATYPES = ["name", "httpEquiv", "charSet", "itemProp"];
+var METATYPES = ["name", "httpEquiv", "charSet", "viewport", "itemProp"];
 /*
  returns a function for filtering head child elements
  which shouldn't be duplicated, like <title/>
@@ -17264,7 +17194,7 @@ function unique() {
           var metatype = METATYPES[i];
           if (!h.props.hasOwnProperty(metatype)) continue;
 
-          if (metatype === "charSet") {
+          if (metatype === "charSet" || metatype === "viewport") {
             if (metaTypes.has(metatype)) return false;
             metaTypes.add(metatype);
           } else {
@@ -17288,11 +17218,11 @@ function unique() {
  */
 
 
-function reduceComponents(headElements) {
+function reduceComponents(headElements, props) {
   return headElements.reduce(function (list, headElement) {
     var headElementChildren = react_1.default.Children.toArray(headElement.props.children);
     return list.concat(headElementChildren);
-  }, []).reduce(onlyReactElement, []).reverse().concat(defaultHead('')).filter(unique()).reverse().map(function (c, i) {
+  }, []).reduce(onlyReactElement, []).reverse().concat(defaultHead('', props.isAmp)).filter(unique()).reverse().map(function (c, i) {
     var className = (c.props && c.props.className ? c.props.className + " " : "") + "next-head";
     var key = c.key || i;
     return react_1.default.cloneElement(c, {
@@ -17306,11 +17236,14 @@ var Effect = side_effect_1.default();
 
 function Head(_ref) {
   var children = _ref.children;
-  return react_1.default.createElement(head_manager_context_1.HeadManagerContext.Consumer, null, function (updateHead) {
-    return react_1.default.createElement(Effect, {
-      reduceComponentsToState: reduceComponents,
-      handleStateChange: updateHead
-    }, children);
+  return react_1.default.createElement(amphtml_context_1.AmpModeContext.Consumer, null, function (ampMode) {
+    return react_1.default.createElement(head_manager_context_1.HeadManagerContext.Consumer, null, function (updateHead) {
+      return react_1.default.createElement(Effect, {
+        reduceComponentsToState: reduceComponents,
+        handleStateChange: updateHead,
+        isAmp: amp_1.isAmp(ampMode)
+      }, children);
+    });
   });
 }
 
@@ -17376,6 +17309,66 @@ exports.default = mitt;
 
 /***/ }),
 
+/***/ "./node_modules/next-server/dist/lib/request-context.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/next-server/dist/lib/request-context.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var __importStar = void 0 && (void 0).__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+  }
+  result["default"] = mod;
+  return result;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var React = __importStar(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
+
+exports.RequestContext = React.createContext(null);
+
+/***/ }),
+
+/***/ "./node_modules/next-server/dist/lib/router-context.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/next-server/dist/lib/router-context.js ***!
+  \*************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var __importStar = void 0 && (void 0).__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+  }
+  result["default"] = mod;
+  return result;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var React = __importStar(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
+
+exports.RouterContext = React.createContext(null);
+
+/***/ }),
+
 /***/ "./node_modules/next-server/dist/lib/router/router.js":
 /*!************************************************************!*\
   !*** ./node_modules/next-server/dist/lib/router/router.js ***!
@@ -17385,17 +17378,16 @@ exports.default = mitt;
 
 "use strict";
 
-/* global __NEXT_DATA__ */
 
 var _interopRequireDefault = __webpack_require__(/*! @babel/runtime-corejs2/helpers/interopRequireDefault */ "./node_modules/@babel/runtime-corejs2/helpers/interopRequireDefault.js");
-
-var _slicedToArray2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/slicedToArray */ "./node_modules/@babel/runtime-corejs2/helpers/esm/slicedToArray.js"));
-
-var _typeof2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/typeof */ "./node_modules/@babel/runtime-corejs2/helpers/esm/typeof.js"));
 
 var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/regenerator */ "./node_modules/@babel/runtime-corejs2/regenerator/index.js"));
 
 var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/asyncToGenerator */ "./node_modules/@babel/runtime-corejs2/helpers/esm/asyncToGenerator.js"));
+
+var _slicedToArray2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/slicedToArray */ "./node_modules/@babel/runtime-corejs2/helpers/esm/slicedToArray.js"));
+
+var _promise = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/core-js/promise */ "./node_modules/@babel/runtime-corejs2/core-js/promise.js"));
 
 var _assign = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/core-js/object/assign */ "./node_modules/@babel/runtime-corejs2/core-js/object/assign.js"));
 
@@ -17419,23 +17411,23 @@ var url_1 = __webpack_require__(/*! url */ "./node_modules/url/url.js");
 
 var mitt_1 = __importDefault(__webpack_require__(/*! ../mitt */ "./node_modules/next-server/dist/lib/mitt.js"));
 
-var shallow_equals_1 = __importDefault(__webpack_require__(/*! ./shallow-equals */ "./node_modules/next-server/dist/lib/router/shallow-equals.js"));
-
 var utils_1 = __webpack_require__(/*! ../utils */ "./node_modules/next-server/dist/lib/utils.js");
+
+function toRoute(path) {
+  return path.replace(/\/$/, '') || '/';
+}
 
 var Router =
 /*#__PURE__*/
 function () {
-  function Router(pathname, query, as) {
+  function Router(pathname, query, as, _ref) {
     var _this = this;
 
-    var _ref = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {},
-        initialProps = _ref.initialProps,
+    var initialProps = _ref.initialProps,
         pageLoader = _ref.pageLoader,
         App = _ref.App,
         Component = _ref.Component,
         err = _ref.err;
-
     (0, _classCallCheck2.default)(this, Router);
 
     this.onPopState = function (e) {
@@ -17458,11 +17450,17 @@ function () {
         }), utils_1.getURL());
 
         return;
+      } // Make sure we don't re-render on initial load,
+      // can be caused by navigating back from an external site
+
+
+      if (e.state.options && e.state.options.fromExternal) {
+        return;
       } // If the downstream application returns falsy, return.
       // They will then be responsible for handling the event.
 
 
-      if (!_this._beforePopState(e.state)) {
+      if (_this._bps && !_this._bps(e.state)) {
         return;
       }
 
@@ -17499,6 +17497,7 @@ function () {
       Component: App
     }; // Backwards compat for Router.router.events
     // TODO: Should be remove the following major version as it was never documented
+    // @ts-ignore backwards compatibility
 
     this.events = Router.events;
     this.pageLoader = pageLoader;
@@ -17508,10 +17507,6 @@ function () {
     this.subscriptions = new _set.default();
     this.componentLoadCancel = null;
 
-    this._beforePopState = function () {
-      return true;
-    };
-
     if (typeof window !== 'undefined') {
       // in order for `e.state` to work on the `onpopstate` event
       // we have to register the initial route upon initialization
@@ -17520,6 +17515,20 @@ function () {
         query: query
       }), as);
       window.addEventListener('popstate', this.onPopState);
+      window.addEventListener('unload', function () {
+        // Workaround for popstate firing on initial page load when
+        // navigating back from an external site
+        if (history.state) {
+          var _history$state = history.state,
+              url = _history$state.url,
+              _as2 = _history$state.as,
+              options = _history$state.options;
+
+          _this.changeState('replaceState', url, _as2, (0, _assign.default)({}, options, {
+            fromExternal: true
+          }));
+        }
+      });
     }
   }
 
@@ -17548,73 +17557,43 @@ function () {
     }
   }, {
     key: "reload",
-    value: function () {
-      var _reload = (0, _asyncToGenerator2.default)(
-      /*#__PURE__*/
-      _regenerator.default.mark(function _callee(route) {
-        var pathname, query, url, as, routeInfo, error;
-        return _regenerator.default.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                delete this.components[route];
-                this.pageLoader.clearCache(route);
+    value: function reload(route) {
+      var _this2 = this;
 
-                if (!(route !== this.route)) {
-                  _context.next = 4;
-                  break;
-                }
+      return new _promise.default(function (resolve, reject) {
+        delete _this2.components[route];
 
-                return _context.abrupt("return");
+        _this2.pageLoader.clearCache(route);
 
-              case 4:
-                pathname = this.pathname, query = this.query;
-                url = window.location.href; // This makes sure we only use pathname + query + hash, to mirror `asPath` coming from the server.
+        if (route !== _this2.route) {
+          return resolve();
+        }
 
-                as = window.location.pathname + window.location.search + window.location.hash;
-                Router.events.emit('routeChangeStart', url);
-                _context.next = 10;
-                return this.getRouteInfo(route, pathname, query, as);
+        var pathname = _this2.pathname,
+            query = _this2.query;
+        var url = window.location.href; // This makes sure we only use pathname + query + hash, to mirror `asPath` coming from the server.
 
-              case 10:
-                routeInfo = _context.sent;
-                error = routeInfo.error;
+        var as = window.location.pathname + window.location.search + window.location.hash;
+        Router.events.emit('routeChangeStart', url);
 
-                if (!(error && error.cancelled)) {
-                  _context.next = 14;
-                  break;
-                }
+        _this2.getRouteInfo(route, pathname, query, as).then(function (routeInfo) {
+          var error = routeInfo.error;
 
-                return _context.abrupt("return");
-
-              case 14:
-                this.notify(routeInfo);
-
-                if (!error) {
-                  _context.next = 18;
-                  break;
-                }
-
-                Router.events.emit('routeChangeError', error, url);
-                throw error;
-
-              case 18:
-                Router.events.emit('routeChangeComplete', url);
-
-              case 19:
-              case "end":
-                return _context.stop();
-            }
+          if (error && error.cancelled) {
+            return resolve();
           }
-        }, _callee, this);
-      }));
 
-      function reload(_x) {
-        return _reload.apply(this, arguments);
-      }
+          _this2.notify(routeInfo);
 
-      return reload;
-    }()
+          if (error) {
+            Router.events.emit('routeChangeError', error, url);
+            return reject(error);
+          }
+
+          Router.events.emit('routeChangeComplete', url);
+        });
+      });
+    }
   }, {
     key: "back",
     value: function back() {
@@ -17636,118 +17615,85 @@ function () {
     }
   }, {
     key: "change",
-    value: function () {
-      var _change = (0, _asyncToGenerator2.default)(
-      /*#__PURE__*/
-      _regenerator.default.mark(function _callee2(method, _url, _as, options) {
-        var url, as, _url_1$parse, pathname, query, route, _options$shallow, shallow, routeInfo, _routeInfo, error, hash;
+    value: function change(method, _url, _as, options) {
+      var _this3 = this;
 
-        return _regenerator.default.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                // If url and as provided as an object representation,
-                // we'll format them into the string version here.
-                url = (0, _typeof2.default)(_url) === 'object' ? utils_1.formatWithValidation(_url) : _url;
-                as = (0, _typeof2.default)(_as) === 'object' ? utils_1.formatWithValidation(_as) : _as; // Add the ending slash to the paths. So, we can serve the
-                // "<page>/index.html" directly for the SSR page.
+      return new _promise.default(function (resolve, reject) {
+        // If url and as provided as an object representation,
+        // we'll format them into the string version here.
+        var url = typeof _url === 'object' ? utils_1.formatWithValidation(_url) : _url;
+        var as = typeof _as === 'object' ? utils_1.formatWithValidation(_as) : _as; // Add the ending slash to the paths. So, we can serve the
+        // "<page>/index.html" directly for the SSR page.
 
-                if (__NEXT_DATA__.nextExport) {
-                  as = Router._rewriteUrlForNextExport(as);
-                }
-
-                this.abortComponentLoad(as); // If the url change is only related to a hash change
-                // We should not proceed. We should only change the state.
-
-                if (!this.onlyAHashChange(as)) {
-                  _context2.next = 10;
-                  break;
-                }
-
-                Router.events.emit('hashChangeStart', as);
-                this.changeState(method, url, as);
-                this.scrollToHash(as);
-                Router.events.emit('hashChangeComplete', as);
-                return _context2.abrupt("return", true);
-
-              case 10:
-                _url_1$parse = url_1.parse(url, true), pathname = _url_1$parse.pathname, query = _url_1$parse.query; // If asked to change the current URL we should reload the current page
-                // (not location.reload() but reload getInitialProps and other Next.js stuffs)
-                // We also need to set the method = replaceState always
-                // as this should not go into the history (That's how browsers work)
-                // We should compare the new asPath to the current asPath, not the url
-
-                if (!this.urlIsNew(as)) {
-                  method = 'replaceState';
-                }
-
-                route = toRoute(pathname);
-                _options$shallow = options.shallow, shallow = _options$shallow === void 0 ? false : _options$shallow;
-                routeInfo = null;
-                Router.events.emit('routeChangeStart', as); // If shallow === false and other conditions met, we reuse the
-                // existing routeInfo for this route.
-                // Because of this, getInitialProps would not run.
-
-                if (!(shallow && this.isShallowRoutingPossible(route))) {
-                  _context2.next = 20;
-                  break;
-                }
-
-                routeInfo = this.components[route];
-                _context2.next = 23;
-                break;
-
-              case 20:
-                _context2.next = 22;
-                return this.getRouteInfo(route, pathname, query, as);
-
-              case 22:
-                routeInfo = _context2.sent;
-
-              case 23:
-                _routeInfo = routeInfo, error = _routeInfo.error;
-
-                if (!(error && error.cancelled)) {
-                  _context2.next = 26;
-                  break;
-                }
-
-                return _context2.abrupt("return", false);
-
-              case 26:
-                Router.events.emit('beforeHistoryChange', as);
-                this.changeState(method, url, as, options);
-                hash = window.location.hash.substring(1);
-                this.set(route, pathname, query, as, (0, _assign.default)({}, routeInfo, {
-                  hash: hash
-                }));
-
-                if (!error) {
-                  _context2.next = 33;
-                  break;
-                }
-
-                Router.events.emit('routeChangeError', error, as);
-                throw error;
-
-              case 33:
-                Router.events.emit('routeChangeComplete', as);
-                return _context2.abrupt("return", true);
-
-              case 35:
-              case "end":
-                return _context2.stop();
-            }
+        if (true) {
+          // @ts-ignore this is temporarily global (attached to window)
+          if (__NEXT_DATA__.nextExport) {
+            as = Router._rewriteUrlForNextExport(as);
           }
-        }, _callee2, this);
-      }));
+        }
 
-      function change(_x2, _x3, _x4, _x5) {
-        return _change.apply(this, arguments);
-      }
+        _this3.abortComponentLoad(as); // If the url change is only related to a hash change
+        // We should not proceed. We should only change the state.
 
-      return change;
-    }()
+
+        if (_this3.onlyAHashChange(as)) {
+          Router.events.emit('hashChangeStart', as);
+
+          _this3.changeState(method, url, as);
+
+          _this3.scrollToHash(as);
+
+          Router.events.emit('hashChangeComplete', as);
+          return true;
+        }
+
+        var _url_1$parse = url_1.parse(url, true),
+            pathname = _url_1$parse.pathname,
+            query = _url_1$parse.query; // If asked to change the current URL we should reload the current page
+        // (not location.reload() but reload getInitialProps and other Next.js stuffs)
+        // We also need to set the method = replaceState always
+        // as this should not go into the history (That's how browsers work)
+        // We should compare the new asPath to the current asPath, not the url
+
+
+        if (!_this3.urlIsNew(as)) {
+          method = 'replaceState';
+        } // @ts-ignore pathname is always a string
+
+
+        var route = toRoute(pathname);
+        var _options$shallow = options.shallow,
+            shallow = _options$shallow === void 0 ? false : _options$shallow;
+        Router.events.emit('routeChangeStart', as); // If shallow is true and the route exists in the router cache we reuse the previous result
+        // @ts-ignore pathname is always a string
+
+        _this3.getRouteInfo(route, pathname, query, as, shallow).then(function (routeInfo) {
+          var error = routeInfo.error;
+
+          if (error && error.cancelled) {
+            return resolve(false);
+          }
+
+          Router.events.emit('beforeHistoryChange', as);
+
+          _this3.changeState(method, url, as, options);
+
+          var hash = window.location.hash.substring(1); // @ts-ignore pathname is always defined
+
+          _this3.set(route, pathname, query, as, (0, _assign.default)({}, routeInfo, {
+            hash: hash
+          }));
+
+          if (error) {
+            Router.events.emit('routeChangeError', error, as);
+            throw error;
+          }
+
+          Router.events.emit('routeChangeComplete', as);
+          return resolve(true);
+        }, reject);
+      });
+    }
   }, {
     key: "changeState",
     value: function changeState(method, url, as) {
@@ -17757,7 +17703,8 @@ function () {
         if (typeof window.history === 'undefined') {
           console.error("Warning: window.history is not available.");
           return;
-        }
+        } // @ts-ignore method should always exist on history
+
 
         if (typeof window.history[method] === 'undefined') {
           console.error("Warning: window.history.".concat(method, " is not available"));
@@ -17766,6 +17713,7 @@ function () {
       }
 
       if (method !== 'pushState' || utils_1.getURL() !== as) {
+        // @ts-ignore method should always exist on history
         window.history[method]({
           url: url,
           as: as,
@@ -17775,145 +17723,103 @@ function () {
     }
   }, {
     key: "getRouteInfo",
-    value: function () {
-      var _getRouteInfo = (0, _asyncToGenerator2.default)(
-      /*#__PURE__*/
-      _regenerator.default.mark(function _callee3(route, pathname, query, as) {
-        var routeInfo, _routeInfo2, Component, _require, isValidElementType, ctx, _Component, _ctx;
+    value: function getRouteInfo(route, pathname, query, as) {
+      var _this4 = this;
 
-        return _regenerator.default.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                routeInfo = null;
-                _context3.prev = 1;
-                routeInfo = this.components[route];
+      var shallow = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
+      var cachedRouteInfo = this.components[route]; // If there is a shallow route transition possible
+      // If the route is already rendered on the screen.
 
-                if (routeInfo) {
-                  _context3.next = 8;
-                  break;
-                }
-
-                _context3.next = 6;
-                return this.fetchComponent(route, as);
-
-              case 6:
-                _context3.t0 = _context3.sent;
-                routeInfo = {
-                  Component: _context3.t0
-                };
-
-              case 8:
-                _routeInfo2 = routeInfo, Component = _routeInfo2.Component;
-
-                if (false) {}
-
-                _require = __webpack_require__(/*! react-is */ "./node_modules/react-is/index.js"), isValidElementType = _require.isValidElementType;
-
-                if (isValidElementType(Component)) {
-                  _context3.next = 13;
-                  break;
-                }
-
-                throw new Error("The default export is not a React Component in page: \"".concat(pathname, "\""));
-
-              case 13:
-                ctx = {
-                  pathname: pathname,
-                  query: query,
-                  asPath: as
-                };
-                _context3.next = 16;
-                return this.getInitialProps(Component, ctx);
-
-              case 16:
-                routeInfo.props = _context3.sent;
-                this.components[route] = routeInfo;
-                _context3.next = 44;
-                break;
-
-              case 20:
-                _context3.prev = 20;
-                _context3.t1 = _context3["catch"](1);
-
-                if (!(_context3.t1.code === 'PAGE_LOAD_ERROR')) {
-                  _context3.next = 26;
-                  break;
-                }
-
-                // If we can't load the page it could be one of following reasons
-                //  1. Page doesn't exists
-                //  2. Page does exist in a different zone
-                //  3. Internal error while loading the page
-                // So, doing a hard reload is the proper way to deal with this.
-                window.location.href = as; // Changing the URL doesn't block executing the current code path.
-                // So, we need to mark it as a cancelled error and stop the routing logic.
-
-                _context3.t1.cancelled = true;
-                return _context3.abrupt("return", {
-                  error: _context3.t1
-                });
-
-              case 26:
-                if (!_context3.t1.cancelled) {
-                  _context3.next = 28;
-                  break;
-                }
-
-                return _context3.abrupt("return", {
-                  error: _context3.t1
-                });
-
-              case 28:
-                _context3.next = 30;
-                return this.fetchComponent('/_error');
-
-              case 30:
-                _Component = _context3.sent;
-                routeInfo = {
-                  Component: _Component,
-                  err: _context3.t1
-                };
-                _ctx = {
-                  err: _context3.t1,
-                  pathname: pathname,
-                  query: query
-                };
-                _context3.prev = 33;
-                _context3.next = 36;
-                return this.getInitialProps(_Component, _ctx);
-
-              case 36:
-                routeInfo.props = _context3.sent;
-                _context3.next = 43;
-                break;
-
-              case 39:
-                _context3.prev = 39;
-                _context3.t2 = _context3["catch"](33);
-                console.error('Error in error page `getInitialProps`: ', _context3.t2);
-                routeInfo.props = {};
-
-              case 43:
-                routeInfo.error = _context3.t1;
-
-              case 44:
-                return _context3.abrupt("return", routeInfo);
-
-              case 45:
-              case "end":
-                return _context3.stop();
-            }
-          }
-        }, _callee3, this, [[1, 20], [33, 39]]);
-      }));
-
-      function getRouteInfo(_x6, _x7, _x8, _x9) {
-        return _getRouteInfo.apply(this, arguments);
+      if (shallow && cachedRouteInfo && this.route === route) {
+        return _promise.default.resolve(cachedRouteInfo);
       }
 
-      return getRouteInfo;
-    }()
+      return new _promise.default(function (resolve, reject) {
+        if (cachedRouteInfo) {
+          return resolve(cachedRouteInfo);
+        }
+
+        _this4.fetchComponent(route).then(function (Component) {
+          return resolve({
+            Component: Component
+          });
+        }, reject);
+      }).then(function (routeInfo) {
+        var Component = routeInfo.Component;
+
+        if (true) {
+          var _require = __webpack_require__(/*! react-is */ "./node_modules/react-is/index.js"),
+              isValidElementType = _require.isValidElementType;
+
+          if (!isValidElementType(Component)) {
+            throw new Error("The default export is not a React Component in page: \"".concat(pathname, "\""));
+          }
+        }
+
+        return new _promise.default(function (resolve, reject) {
+          var ctx = {
+            pathname: pathname,
+            query: query,
+            asPath: as
+          };
+
+          _this4.getInitialProps(Component, ctx).then(function (props) {
+            routeInfo.props = props;
+            _this4.components[route] = routeInfo;
+            resolve(routeInfo);
+          }, reject);
+        });
+      }).catch(function (err) {
+        return new _promise.default(function (resolve) {
+          if (err.code === 'PAGE_LOAD_ERROR') {
+            // If we can't load the page it could be one of following reasons
+            //  1. Page doesn't exists
+            //  2. Page does exist in a different zone
+            //  3. Internal error while loading the page
+            // So, doing a hard reload is the proper way to deal with this.
+            window.location.href = as; // Changing the URL doesn't block executing the current code path.
+            // So, we need to mark it as a cancelled error and stop the routing logic.
+
+            err.cancelled = true; // @ts-ignore TODO: fix the control flow here
+
+            return resolve({
+              error: err
+            });
+          }
+
+          if (err.cancelled) {
+            // @ts-ignore TODO: fix the control flow here
+            return resolve({
+              error: err
+            });
+          }
+
+          resolve(_this4.fetchComponent('/_error').then(function (Component) {
+            var routeInfo = {
+              Component: Component,
+              err: err
+            };
+            var ctx = {
+              err: err,
+              pathname: pathname,
+              query: query
+            };
+            return new _promise.default(function (resolve) {
+              _this4.getInitialProps(Component, ctx).then(function (props) {
+                routeInfo.props = props;
+                routeInfo.error = err;
+                resolve(routeInfo);
+              }, function (gipErr) {
+                console.error('Error in error page `getInitialProps`: ', gipErr);
+                routeInfo.error = err;
+                routeInfo.props = {};
+                resolve(routeInfo);
+              });
+            });
+          }));
+        });
+      });
+    }
   }, {
     key: "set",
     value: function set(route, pathname, query, as, data) {
@@ -17926,7 +17832,7 @@ function () {
   }, {
     key: "beforePopState",
     value: function beforePopState(cb) {
-      this._beforePopState = cb;
+      this._bps = cb;
     }
   }, {
     key: "onlyAHashChange",
@@ -17991,68 +17897,36 @@ function () {
   }, {
     key: "urlIsNew",
     value: function urlIsNew(asPath) {
-      var _url_1$parse2 = url_1.parse(asPath, true),
-          pathname = _url_1$parse2.pathname,
-          query = _url_1$parse2.query;
-
-      var _url_1$parse3 = url_1.parse(this.asPath, true),
-          curPathname = _url_1$parse3.pathname;
-
-      return curPathname !== pathname || !shallow_equals_1.default(query, this.query);
-    }
-  }, {
-    key: "isShallowRoutingPossible",
-    value: function isShallowRoutingPossible(route) {
-      return (// If there's cached routeInfo for the route.
-        Boolean(this.components[route]) && // If the route is already rendered on the screen.
-        this.route === route
-      );
+      return this.asPath !== asPath;
     }
   }, {
     key: "prefetch",
-    value: function () {
-      var _prefetch = (0, _asyncToGenerator2.default)(
-      /*#__PURE__*/
-      _regenerator.default.mark(function _callee4(url) {
-        var _url_1$parse4, pathname, route;
+    value: function prefetch(url) {
+      var _this5 = this;
 
-        return _regenerator.default.wrap(function _callee4$(_context4) {
-          while (1) {
-            switch (_context4.prev = _context4.next) {
-              case 0:
-                if (false) {}
+      return new _promise.default(function (resolve, reject) {
+        // Prefetch is not supported in development mode because it would trigger on-demand-entries
+        if (true) return;
 
-                return _context4.abrupt("return");
+        var _url_1$parse2 = url_1.parse(url),
+            pathname = _url_1$parse2.pathname; // @ts-ignore pathname is always defined
 
-              case 2:
-                _url_1$parse4 = url_1.parse(url), pathname = _url_1$parse4.pathname;
-                route = toRoute(pathname);
-                return _context4.abrupt("return", this.pageLoader.prefetch(route));
 
-              case 5:
-              case "end":
-                return _context4.stop();
-            }
-          }
-        }, _callee4, this);
-      }));
+        var route = toRoute(pathname);
 
-      function prefetch(_x10) {
-        return _prefetch.apply(this, arguments);
-      }
-
-      return prefetch;
-    }()
+        _this5.pageLoader.prefetch(route).then(resolve, reject);
+      });
+    }
   }, {
     key: "fetchComponent",
     value: function () {
       var _fetchComponent = (0, _asyncToGenerator2.default)(
       /*#__PURE__*/
-      _regenerator.default.mark(function _callee5(route, as) {
+      _regenerator.default.mark(function _callee(route) {
         var cancelled, cancel, Component, error;
-        return _regenerator.default.wrap(function _callee5$(_context5) {
+        return _regenerator.default.wrap(function _callee$(_context) {
           while (1) {
-            switch (_context5.prev = _context5.next) {
+            switch (_context.prev = _context.next) {
               case 0:
                 cancelled = false;
 
@@ -18060,14 +17934,14 @@ function () {
                   cancelled = true;
                 };
 
-                _context5.next = 4;
-                return this.fetchRoute(route);
+                _context.next = 4;
+                return this.pageLoader.loadPage(route);
 
               case 4:
-                Component = _context5.sent;
+                Component = _context.sent;
 
                 if (!cancelled) {
-                  _context5.next = 9;
+                  _context.next = 9;
                   break;
                 }
 
@@ -18080,17 +17954,17 @@ function () {
                   this.componentLoadCancel = null;
                 }
 
-                return _context5.abrupt("return", Component);
+                return _context.abrupt("return", Component);
 
               case 11:
               case "end":
-                return _context5.stop();
+                return _context.stop();
             }
           }
-        }, _callee5, this);
+        }, _callee, this);
       }));
 
-      function fetchComponent(_x11, _x12) {
+      function fetchComponent(_x) {
         return _fetchComponent.apply(this, arguments);
       }
 
@@ -18101,11 +17975,11 @@ function () {
     value: function () {
       var _getInitialProps = (0, _asyncToGenerator2.default)(
       /*#__PURE__*/
-      _regenerator.default.mark(function _callee6(Component, ctx) {
+      _regenerator.default.mark(function _callee2(Component, ctx) {
         var cancelled, cancel, App, props, err;
-        return _regenerator.default.wrap(function _callee6$(_context6) {
+        return _regenerator.default.wrap(function _callee2$(_context2) {
           while (1) {
-            switch (_context6.prev = _context6.next) {
+            switch (_context2.prev = _context2.next) {
               case 0:
                 cancelled = false;
 
@@ -18115,7 +17989,7 @@ function () {
 
                 this.componentLoadCancel = cancel;
                 App = this.components['/_app'].Component;
-                _context6.next = 6;
+                _context2.next = 6;
                 return utils_1.loadGetInitialProps(App, {
                   Component: Component,
                   router: this,
@@ -18123,14 +17997,14 @@ function () {
                 });
 
               case 6:
-                props = _context6.sent;
+                props = _context2.sent;
 
                 if (cancel === this.componentLoadCancel) {
                   this.componentLoadCancel = null;
                 }
 
                 if (!cancelled) {
-                  _context6.next = 12;
+                  _context2.next = 12;
                   break;
                 }
 
@@ -18139,47 +18013,21 @@ function () {
                 throw err;
 
               case 12:
-                return _context6.abrupt("return", props);
+                return _context2.abrupt("return", props);
 
               case 13:
               case "end":
-                return _context6.stop();
+                return _context2.stop();
             }
           }
-        }, _callee6, this);
+        }, _callee2, this);
       }));
 
-      function getInitialProps(_x13, _x14) {
+      function getInitialProps(_x2, _x3) {
         return _getInitialProps.apply(this, arguments);
       }
 
       return getInitialProps;
-    }()
-  }, {
-    key: "fetchRoute",
-    value: function () {
-      var _fetchRoute = (0, _asyncToGenerator2.default)(
-      /*#__PURE__*/
-      _regenerator.default.mark(function _callee7(route) {
-        return _regenerator.default.wrap(function _callee7$(_context7) {
-          while (1) {
-            switch (_context7.prev = _context7.next) {
-              case 0:
-                return _context7.abrupt("return", this.pageLoader.loadPage(route));
-
-              case 1:
-              case "end":
-                return _context7.stop();
-            }
-          }
-        }, _callee7, this);
-      }));
-
-      function fetchRoute(_x15) {
-        return _fetchRoute.apply(this, arguments);
-      }
-
-      return fetchRoute;
     }()
   }, {
     key: "abortComponentLoad",
@@ -18203,11 +18051,11 @@ function () {
   }, {
     key: "subscribe",
     value: function subscribe(fn) {
-      var _this2 = this;
+      var _this6 = this;
 
       this.subscriptions.add(fn);
       return function () {
-        return _this2.subscriptions.delete(fn);
+        return _this6.subscriptions.delete(fn);
       };
     }
   }], [{
@@ -18215,31 +18063,21 @@ function () {
     value: function _rewriteUrlForNextExport(url) {
       var _url$split = url.split('#'),
           _url$split2 = (0, _slicedToArray2.default)(_url$split, 2),
-          hash = _url$split2[1];
+          pathname = _url$split2[0],
+          hash = _url$split2[1]; // tslint:disable-next-line
 
-      url = url.replace(/#.*/, '');
 
-      var _url$split3 = url.split('?'),
-          _url$split4 = (0, _slicedToArray2.default)(_url$split3, 2),
-          path = _url$split4[0],
-          qs = _url$split4[1];
+      var _pathname$split = pathname.split('?'),
+          _pathname$split2 = (0, _slicedToArray2.default)(_pathname$split, 2),
+          path = _pathname$split2[0],
+          qs = _pathname$split2[1];
 
-      path = path.replace(/\/$/, '');
-      var newPath = path; // Append a trailing slash if this path does not have an extension
+      path = path.replace(/\/$/, ''); // Append a trailing slash if this path does not have an extension
 
-      if (!/\.[^/]+\/?$/.test(path)) {
-        newPath = "".concat(path, "/");
-      }
-
-      if (qs) {
-        newPath = "".concat(newPath, "?").concat(qs);
-      }
-
-      if (hash) {
-        newPath = "".concat(newPath, "#").concat(hash);
-      }
-
-      return newPath;
+      if (!/\.[^/]+\/?$/.test(path)) path += "/";
+      if (qs) path += '?' + qs;
+      if (hash) path += '#' + hash;
+      return path;
     }
   }]);
   return Router;
@@ -18247,40 +18085,6 @@ function () {
 
 Router.events = mitt_1.default();
 exports.default = Router;
-
-function toRoute(path) {
-  return path.replace(/\/$/, '') || '/';
-}
-
-/***/ }),
-
-/***/ "./node_modules/next-server/dist/lib/router/shallow-equals.js":
-/*!********************************************************************!*\
-  !*** ./node_modules/next-server/dist/lib/router/shallow-equals.js ***!
-  \********************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-function shallowEquals(a, b) {
-  for (var i in a) {
-    if (b[i] !== a[i]) return false;
-  }
-
-  for (var _i in b) {
-    if (b[_i] !== a[_i]) return false;
-  }
-
-  return true;
-}
-
-exports.default = shallowEquals;
 
 /***/ }),
 
@@ -18325,7 +18129,7 @@ function withSideEffect() {
   var state;
 
   function emitChange(component) {
-    state = component.props.reduceComponentsToState((0, _toConsumableArray2.default)(mountedInstances));
+    state = component.props.reduceComponentsToState((0, _toConsumableArray2.default)(mountedInstances), component.props);
 
     if (component.props.handleStateChange) {
       component.props.handleStateChange(state);
@@ -18410,8 +18214,6 @@ var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime
 
 var _keys = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/core-js/object/keys */ "./node_modules/@babel/runtime-corejs2/core-js/object/keys.js"));
 
-var _typeof2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/typeof */ "./node_modules/@babel/runtime-corejs2/helpers/esm/typeof.js"));
-
 var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/asyncToGenerator */ "./node_modules/@babel/runtime-corejs2/helpers/esm/asyncToGenerator.js"));
 
 Object.defineProperty(exports, "__esModule", {
@@ -18458,11 +18260,7 @@ function getURL() {
 exports.getURL = getURL;
 
 function getDisplayName(Component) {
-  if (typeof Component === 'string') {
-    return Component;
-  }
-
-  return Component.displayName || Component.name || 'Unknown';
+  return typeof Component === 'string' ? Component : Component.displayName || Component.name || 'Unknown';
 }
 
 exports.getDisplayName = getDisplayName;
@@ -18546,9 +18344,9 @@ exports.urlObjectKeys = ['auth', 'hash', 'host', 'hostname', 'href', 'path', 'pa
 
 function formatWithValidation(url, options) {
   if (true) {
-    if (url !== null && (0, _typeof2.default)(url) === 'object') {
+    if (url !== null && typeof url === 'object') {
       (0, _keys.default)(url).forEach(function (key) {
-        if (!exports.urlObjectKeys.includes(key)) {
+        if (exports.urlObjectKeys.indexOf(key) === -1) {
           console.warn("Unknown key passed via urlObject into url.format: ".concat(key));
         }
       });
@@ -18559,18 +18357,6 @@ function formatWithValidation(url, options) {
 }
 
 exports.formatWithValidation = formatWithValidation;
-
-/***/ }),
-
-/***/ "./node_modules/next-server/head.js":
-/*!******************************************!*\
-  !*** ./node_modules/next-server/head.js ***!
-  \******************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(/*! ./dist/lib/head */ "./node_modules/next-server/dist/lib/head.js")
-
 
 /***/ }),
 
@@ -18623,8 +18409,6 @@ var _interopRequireDefault = __webpack_require__(/*! @babel/runtime-corejs2/help
 
 var _assign = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/core-js/object/assign */ "./node_modules/@babel/runtime-corejs2/core-js/object/assign.js"));
 
-var _typeof2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/helpers/typeof */ "./node_modules/@babel/runtime-corejs2/helpers/typeof.js"));
-
 var _construct2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/helpers/construct */ "./node_modules/@babel/runtime-corejs2/helpers/construct.js"));
 
 var _defineProperty = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/core-js/object/define-property */ "./node_modules/@babel/runtime-corejs2/core-js/object/define-property.js"));
@@ -18640,7 +18424,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 /* global window */
 
+var react_1 = __importDefault(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
+
 var router_1 = __importDefault(__webpack_require__(/*! next-server/dist/lib/router/router */ "./node_modules/next-server/dist/lib/router/router.js"));
+
+exports.Router = router_1.default;
+
+var router_context_1 = __webpack_require__(/*! next-server/dist/lib/router-context */ "./node_modules/next-server/dist/lib/router-context.js");
+
+var request_context_1 = __webpack_require__(/*! next-server/dist/lib/request-context */ "./node_modules/next-server/dist/lib/request-context.js");
 
 var SingletonRouter = {
   router: null,
@@ -18652,7 +18444,8 @@ var SingletonRouter = {
       this.readyCallbacks.push(cb);
     }
   }
-}; // Create public properties and methods of the router in the SingletonRouter
+}; // const x = SingletonRouter as IRealRouter
+// Create public properties and methods of the router in the SingletonRouter
 
 var urlPropertyFields = ['pathname', 'route', 'query', 'asPath'];
 var propertyFields = ['components'];
@@ -18671,29 +18464,31 @@ propertyFields.concat(urlPropertyFields).forEach(function (field) {
   // proper way to access it
   (0, _defineProperty.default)(SingletonRouter, field, {
     get: function get() {
-      throwIfNoRouter();
-      return SingletonRouter.router[field];
+      var router = getRouter();
+      return router[field];
     }
   });
 });
 coreMethodFields.forEach(function (field) {
+  // We don't really know the types here, so we add them later instead
   SingletonRouter[field] = function () {
-    var _SingletonRouter$rout;
-
-    throwIfNoRouter();
-    return (_SingletonRouter$rout = SingletonRouter.router)[field].apply(_SingletonRouter$rout, arguments);
+    var router = getRouter();
+    return router[field].apply(router, arguments);
   };
 });
 routerEvents.forEach(function (event) {
   SingletonRouter.ready(function () {
     router_1.default.events.on(event, function () {
       var eventField = "on".concat(event.charAt(0).toUpperCase()).concat(event.substring(1));
+      var singletonRouter = SingletonRouter;
 
-      if (SingletonRouter[eventField]) {
+      if (singletonRouter[eventField]) {
         try {
-          SingletonRouter[eventField].apply(SingletonRouter, arguments);
+          singletonRouter[eventField].apply(singletonRouter, arguments);
         } catch (err) {
-          console.error("Error when running the Router event: ".concat(eventField));
+          // tslint:disable-next-line:no-console
+          console.error("Error when running the Router event: ".concat(eventField)); // tslint:disable-next-line:no-console
+
           console.error("".concat(err.message, "\n").concat(err.stack));
         }
       }
@@ -18701,11 +18496,13 @@ routerEvents.forEach(function (event) {
   });
 });
 
-function throwIfNoRouter() {
+function getRouter() {
   if (!SingletonRouter.router) {
     var message = 'No router instance found.\n' + 'You should only use "next/router" inside the client side of your app.\n';
     throw new Error(message);
   }
+
+  return SingletonRouter.router;
 } // Export the SingletonRouter and this is the public API.
 
 
@@ -18713,7 +18510,19 @@ exports.default = SingletonRouter; // Reexport the withRoute HOC
 
 var with_router_1 = __webpack_require__(/*! ./with-router */ "./node_modules/next/dist/client/with-router.js");
 
-exports.withRouter = with_router_1.default; // INTERNAL APIS
+exports.withRouter = with_router_1.default;
+
+function useRouter() {
+  return react_1.default.useContext(router_context_1.RouterContext);
+}
+
+exports.useRouter = useRouter;
+
+function useRequest() {
+  return react_1.default.useContext(request_context_1.RequestContext);
+}
+
+exports.useRequest = useRequest; // INTERNAL APIS
 // -------------
 // (do not use following exports inside the app)
 // Create a router and assign it as the singleton instance.
@@ -18731,24 +18540,23 @@ exports.createRouter = function () {
   });
   SingletonRouter.readyCallbacks = [];
   return SingletonRouter.router;
-}; // Export the actual Router class, which is usually used inside the server
+}; // This function is used to create the `withRouter` router instance
 
-
-exports.Router = router_1.default; // This function is used to create the `withRouter` router instance
 
 function makePublicRouterInstance(router) {
+  var _router = router;
   var instance = {};
 
   for (var _i = 0; _i < urlPropertyFields.length; _i++) {
     var property = urlPropertyFields[_i];
 
-    if ((0, _typeof2.default)(router[property]) === 'object') {
-      instance[property] = (0, _assign.default)({}, router[property]); // makes sure query is not stateful
+    if (typeof _router[property] === 'object') {
+      instance[property] = (0, _assign.default)({}, _router[property]); // makes sure query is not stateful
 
       continue;
     }
 
-    instance[property] = router[property];
+    instance[property] = _router[property];
   } // Events is a static property on the router, the router doesn't have to be initialized to use it
 
 
@@ -18760,13 +18568,13 @@ function makePublicRouterInstance(router) {
     // proper way to access it
     (0, _defineProperty.default)(instance, field, {
       get: function get() {
-        return router[field];
+        return _router[field];
       }
     });
   });
   coreMethodFields.forEach(function (field) {
     instance[field] = function () {
-      return router[field].apply(router, arguments);
+      return _router[field].apply(_router, arguments);
     };
   });
   return instance;
@@ -18800,16 +18608,6 @@ var _getPrototypeOf2 = _interopRequireDefault(__webpack_require__(/*! @babel/run
 
 var _inherits2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/helpers/inherits */ "./node_modules/@babel/runtime-corejs2/helpers/inherits.js"));
 
-var __importStar = void 0 && (void 0).__importStar || function (mod) {
-  if (mod && mod.__esModule) return mod;
-  var result = {};
-  if (mod != null) for (var k in mod) {
-    if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-  }
-  result["default"] = mod;
-  return result;
-};
-
 var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
   return mod && mod.__esModule ? mod : {
     "default": mod
@@ -18820,21 +18618,15 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var react_1 = __importStar(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
+var react_1 = __importDefault(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
 
-var prop_types_1 = __importDefault(__webpack_require__(/*! prop-types */ "./node_modules/prop-types/index.js"));
-
-var hoist_non_react_statics_1 = __importDefault(__webpack_require__(/*! hoist-non-react-statics */ "./node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js"));
-
-var utils_1 = __webpack_require__(/*! next-server/dist/lib/utils */ "./node_modules/next-server/dist/lib/utils.js");
+var prop_types_1 = __importDefault(__webpack_require__(/*! prop-types */ "./node_modules/next/node_modules/prop-types/index.js"));
 
 function withRouter(ComposedComponent) {
-  var displayName = utils_1.getDisplayName(ComposedComponent);
-
   var WithRouteWrapper =
   /*#__PURE__*/
-  function (_react_1$Component) {
-    (0, _inherits2.default)(WithRouteWrapper, _react_1$Component);
+  function (_react_1$default$Comp) {
+    (0, _inherits2.default)(WithRouteWrapper, _react_1$default$Comp);
 
     function WithRouteWrapper() {
       (0, _classCallCheck2.default)(this, WithRouteWrapper);
@@ -18850,13 +18642,19 @@ function withRouter(ComposedComponent) {
       }
     }]);
     return WithRouteWrapper;
-  }(react_1.Component);
+  }(react_1.default.Component);
 
   WithRouteWrapper.contextTypes = {
     router: prop_types_1.default.object
   };
-  WithRouteWrapper.displayName = "withRouter(".concat(displayName, ")");
-  return hoist_non_react_statics_1.default(WithRouteWrapper, ComposedComponent);
+  WithRouteWrapper.getInitialProps = ComposedComponent.getInitialProps;
+
+  if (true) {
+    var name = ComposedComponent.displayName || ComposedComponent.name || 'Unknown';
+    WithRouteWrapper.displayName = "withRouter(".concat(name, ")");
+  }
+
+  return WithRouteWrapper;
 }
 
 exports.default = withRouter;
@@ -18875,9 +18673,7 @@ exports.default = withRouter;
 
 var _interopRequireDefault = __webpack_require__(/*! @babel/runtime-corejs2/helpers/interopRequireDefault */ "./node_modules/@babel/runtime-corejs2/helpers/interopRequireDefault.js");
 
-var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/regenerator */ "./node_modules/@babel/runtime-corejs2/regenerator/index.js"));
-
-var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/helpers/asyncToGenerator */ "./node_modules/@babel/runtime-corejs2/helpers/asyncToGenerator.js"));
+var _promise = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/core-js/promise */ "./node_modules/@babel/runtime-corejs2/core-js/promise.js"));
 
 var _assign = _interopRequireDefault(__webpack_require__(/*! @babel/runtime-corejs2/core-js/object/assign */ "./node_modules/@babel/runtime-corejs2/core-js/object/assign.js"));
 
@@ -18913,11 +18709,11 @@ Object.defineProperty(exports, "__esModule", {
 
 var react_1 = __importStar(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
 
-var prop_types_1 = __importDefault(__webpack_require__(/*! prop-types */ "./node_modules/prop-types/index.js"));
+var prop_types_1 = __importDefault(__webpack_require__(/*! prop-types */ "./node_modules/next/node_modules/prop-types/index.js"));
 
 var utils_1 = __webpack_require__(/*! next-server/dist/lib/utils */ "./node_modules/next-server/dist/lib/utils.js");
 
-var router_1 = __webpack_require__(/*! next/router */ "./node_modules/next/router.js");
+var router_1 = __webpack_require__(/*! next/router */ "./node_modules/next/dist/client/router.js");
 
 var App =
 /*#__PURE__*/
@@ -18957,39 +18753,21 @@ function (_react_1$Component) {
     }
   }], [{
     key: "getInitialProps",
-    value: function () {
-      var _getInitialProps = (0, _asyncToGenerator2.default)(
-      /*#__PURE__*/
-      _regenerator.default.mark(function _callee(_ref) {
-        var Component, router, ctx, pageProps;
-        return _regenerator.default.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                Component = _ref.Component, router = _ref.router, ctx = _ref.ctx;
-                _context.next = 3;
-                return utils_1.loadGetInitialProps(Component, ctx);
+    value: function (_ref) {
+      var Component = _ref.Component,
+          router = _ref.router,
+          ctx = _ref.ctx;
 
-              case 3:
-                pageProps = _context.sent;
-                return _context.abrupt("return", {
-                  pageProps: pageProps
-                });
-
-              case 5:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this);
-      }));
-
-      function getInitialProps(_x) {
-        return _getInitialProps.apply(this, arguments);
+      try {
+        return _promise.default.resolve(utils_1.loadGetInitialProps(Component, ctx)).then(function (pageProps) {
+          return {
+            pageProps: pageProps
+          };
+        });
+      } catch (e) {
+        return _promise.default.reject(e);
       }
-
-      return getInitialProps;
-    }()
+    }
   }]);
   return App;
 }(react_1.Component);
@@ -19101,930 +18879,113 @@ exports.createUrl = createUrl;
 
 /***/ }),
 
-/***/ "./node_modules/next/router.js":
-/*!*************************************!*\
-  !*** ./node_modules/next/router.js ***!
-  \*************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(/*! ./dist/client/router */ "./node_modules/next/dist/client/router.js")
-
-
-/***/ }),
-
-/***/ "./node_modules/object-assign/index.js":
-/*!***************************************************************************************************!*\
-  !*** delegated ./node_modules/object-assign/index.js from dll-reference dll_1aef2d0bbc0d334d831c ***!
-  \***************************************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = (__webpack_require__(/*! dll-reference dll_1aef2d0bbc0d334d831c */ "dll-reference dll_1aef2d0bbc0d334d831c"))("./node_modules/object-assign/index.js");
-
-/***/ }),
-
-/***/ "./node_modules/optimism/lib/cache.js":
-/*!********************************************!*\
-  !*** ./node_modules/optimism/lib/cache.js ***!
-  \********************************************/
+/***/ "./node_modules/next/node_modules/prop-types/checkPropTypes.js":
+/*!*********************************************************************!*\
+  !*** ./node_modules/next/node_modules/prop-types/checkPropTypes.js ***!
+  \*********************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+/**
+ * Copyright (c) 2013-present, Facebook, Inc.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
 
 
-function Cache(options) {
-  this.map = new Map;
-  this.newest = null;
-  this.oldest = null;
-  this.max = options && options.max;
-  this.dispose = options && options.dispose;
-}
 
-exports.Cache = Cache;
-
-var Cp = Cache.prototype;
-
-Cp.has = function (key) {
-  return this.map.has(key);
-};
-
-Cp.get = function (key) {
-  var entry = getEntry(this, key);
-  return entry && entry.value;
-};
-
-function getEntry(cache, key) {
-  var entry = cache.map.get(key);
-  if (entry &&
-      entry !== cache.newest) {
-    var older = entry.older;
-    var newer = entry.newer;
-
-    if (newer) {
-      newer.older = older;
-    }
-
-    if (older) {
-      older.newer = newer;
-    }
-
-    entry.older = cache.newest;
-    entry.older.newer = entry;
-
-    entry.newer = null;
-    cache.newest = entry;
-
-    if (entry === cache.oldest) {
-      cache.oldest = newer;
-    }
-  }
-
-  return entry;
-}
-
-Cp.set = function (key, value) {
-  var entry = getEntry(this, key);
-  if (entry) {
-    return entry.value = value;
-  }
-
-  entry = {
-    key: key,
-    value: value,
-    newer: null,
-    older: this.newest
-  };
-
-  if (this.newest) {
-    this.newest.newer = entry;
-  }
-
-  this.newest = entry;
-  this.oldest = this.oldest || entry;
-
-  this.map.set(key, entry);
-
-  return entry.value;
-};
-
-Cp.clean = function () {
-  if (typeof this.max === "number") {
-    while (this.oldest &&
-           this.map.size > this.max) {
-      this.delete(this.oldest.key);
-    }
-  }
-};
-
-Cp.delete = function (key) {
-  var entry = this.map.get(key);
-  if (entry) {
-    if (entry === this.newest) {
-      this.newest = entry.older;
-    }
-
-    if (entry === this.oldest) {
-      this.oldest = entry.newer;
-    }
-
-    if (entry.newer) {
-      entry.newer.older = entry.older;
-    }
-
-    if (entry.older) {
-      entry.older.newer = entry.newer;
-    }
-
-    this.map.delete(key);
-
-    if (typeof this.dispose === "function") {
-      this.dispose(key, entry.value);
-    }
-
-    return true;
-  }
-
-  return false;
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/optimism/lib/entry.js":
-/*!********************************************!*\
-  !*** ./node_modules/optimism/lib/entry.js ***!
-  \********************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var getLocal = __webpack_require__(/*! ./local.js */ "./node_modules/optimism/lib/local.js").get;
-var UNKNOWN_VALUE = Object.create(null);
-var emptySetPool = [];
-var entryPool = [];
-
-// Don't let the emptySetPool or entryPool grow larger than this size,
-// since unconstrained pool growth could lead to memory leaks.
-exports.POOL_TARGET_SIZE = 100;
-
-// Since this package might be used browsers, we should avoid using the
-// Node built-in assert module.
-function assert(condition, optionalMessage) {
-  if (! condition) {
-    throw new Error(optionalMessage || "assertion failure");
-  }
-}
-
-function Entry(fn, key, args) {
-  this.parents = new Set;
-  this.childValues = new Map;
-
-  // When this Entry has children that are dirty, this property becomes
-  // a Set containing other Entry objects, borrowed from emptySetPool.
-  // When the set becomes empty, it gets recycled back to emptySetPool.
-  this.dirtyChildren = null;
-
-  reset(this, fn, key, args);
-
-  ++Entry.count;
-}
-
-Entry.count = 0;
-
-function reset(entry, fn, key, args) {
-  entry.fn = fn;
-  entry.key = key;
-  entry.args = args;
-  entry.value = UNKNOWN_VALUE;
-  entry.dirty = true;
-  entry.subscribe = null;
-  entry.unsubscribe = null;
-  entry.recomputing = false;
-  // Optional callback that will be invoked when entry.parents becomes
-  // empty. The Entry object is given as the first parameter. If the
-  // callback returns true, then this entry can be removed from the graph
-  // and safely recycled into the entryPool.
-  entry.reportOrphan = null;
-}
-
-Entry.acquire = function (fn, key, args) {
-  var entry = entryPool.pop();
-  if (entry) {
-    reset(entry, fn, key, args);
-    return entry;
-  }
-  return new Entry(fn, key, args);
-};
-
-function release(entry) {
-  assert(entry.parents.size === 0);
-  assert(entry.childValues.size === 0);
-  assert(entry.dirtyChildren === null);
-  if (entryPool.length < exports.POOL_TARGET_SIZE) {
-    entryPool.push(entry);
-  }
-}
-
-exports.Entry = Entry;
-
-var Ep = Entry.prototype;
-
-// The public API of Entry objects consists of the Entry constructor,
-// along with the recompute, setDirty, and dispose methods.
-
-Ep.recompute = function recompute() {
-  if (! rememberParent(this) &&
-      maybeReportOrphan(this)) {
-    // The recipient of the entry.reportOrphan callback decided to dispose
-    // of this orphan entry by calling entry.dispos(), which recycles it
-    // into the entryPool, so we don't need to (and should not) proceed
-    // with the recomputation.
-    return;
-  }
-
-  return recomputeIfDirty(this);
-};
-
-// If the given entry has a reportOrphan method, and no remaining parents,
-// call entry.reportOrphan and return true iff it returns true. The
-// reportOrphan function should return true to indicate entry.dispose()
-// has been called, and the entry has been removed from any other caches
-// (see index.js for the only current example).
-function maybeReportOrphan(entry) {
-  var report = entry.reportOrphan;
-  return typeof report === "function" &&
-    entry.parents.size === 0 &&
-    report(entry) === true;
-}
-
-Ep.setDirty = function setDirty() {
-  if (this.dirty) return;
-  this.dirty = true;
-  this.value = UNKNOWN_VALUE;
-  reportDirty(this);
-  // We can go ahead and unsubscribe here, since any further dirty
-  // notifications we receive will be redundant, and unsubscribing may
-  // free up some resources, e.g. file watchers.
-  unsubscribe(this);
-};
-
-Ep.dispose = function dispose() {
-  var entry = this;
-  forgetChildren(entry).forEach(maybeReportOrphan);
-  unsubscribe(entry);
-
-  // Because this entry has been kicked out of the cache (in index.js),
-  // we've lost the ability to find out if/when this entry becomes dirty,
-  // whether that happens through a subscription, because of a direct call
-  // to entry.setDirty(), or because one of its children becomes dirty.
-  // Because of this loss of future information, we have to assume the
-  // worst (that this entry might have become dirty very soon), so we must
-  // immediately mark this entry's parents as dirty. Normally we could
-  // just call entry.setDirty() rather than calling parent.setDirty() for
-  // each parent, but that would leave this entry in parent.childValues
-  // and parent.dirtyChildren, which would prevent the child from being
-  // truly forgotten.
-  entry.parents.forEach(function (parent) {
-    parent.setDirty();
-    forgetChild(parent, entry);
-  });
-
-  // Since this entry has no parents and no children anymore, and the
-  // caller of Entry#dispose has indicated that entry.value no longer
-  // matters, we can safely recycle this Entry object for later use.
-  release(entry);
-};
-
-function setClean(entry) {
-  entry.dirty = false;
-
-  if (mightBeDirty(entry)) {
-    // This Entry may still have dirty children, in which case we can't
-    // let our parents know we're clean just yet.
-    return;
-  }
-
-  reportClean(entry);
-}
-
-function reportDirty(entry) {
-  entry.parents.forEach(function (parent) {
-    reportDirtyChild(parent, entry);
-  });
-}
-
-function reportClean(entry) {
-  entry.parents.forEach(function (parent) {
-    reportCleanChild(parent, entry);
-  });
-}
-
-function mightBeDirty(entry) {
-  return entry.dirty ||
-    (entry.dirtyChildren &&
-     entry.dirtyChildren.size);
-}
-
-// Let a parent Entry know that one of its children may be dirty.
-function reportDirtyChild(entry, child) {
-  // Must have called rememberParent(child) before calling
-  // reportDirtyChild(parent, child).
-  assert(entry.childValues.has(child));
-  assert(mightBeDirty(child));
-
-  if (! entry.dirtyChildren) {
-    entry.dirtyChildren = emptySetPool.pop() || new Set;
-
-  } else if (entry.dirtyChildren.has(child)) {
-    // If we already know this child is dirty, then we must have already
-    // informed our own parents that we are dirty, so we can terminate
-    // the recursion early.
-    return;
-  }
-
-  entry.dirtyChildren.add(child);
-  reportDirty(entry);
-}
-
-// Let a parent Entry know that one of its children is no longer dirty.
-function reportCleanChild(entry, child) {
-  var cv = entry.childValues;
-
-  // Must have called rememberChild(child) before calling
-  // reportCleanChild(parent, child).
-  assert(cv.has(child));
-  assert(! mightBeDirty(child));
-
-  var childValue = cv.get(child);
-  if (childValue === UNKNOWN_VALUE) {
-    cv.set(child, child.value);
-  } else if (childValue !== child.value) {
-    entry.setDirty();
-  }
-
-  removeDirtyChild(entry, child);
-
-  if (mightBeDirty(entry)) {
-    return;
-  }
-
-  reportClean(entry);
-}
-
-function removeDirtyChild(entry, child) {
-  var dc = entry.dirtyChildren;
-  if (dc) {
-    dc.delete(child);
-    if (dc.size === 0) {
-      if (emptySetPool.length < exports.POOL_TARGET_SIZE) {
-        emptySetPool.push(dc);
-      }
-      entry.dirtyChildren = null;
-    }
-  }
-}
-
-function rememberParent(entry) {
-  var local = getLocal();
-  var parent = local.currentParentEntry;
-  if (parent) {
-    entry.parents.add(parent);
-
-    if (! parent.childValues.has(entry)) {
-      parent.childValues.set(entry, UNKNOWN_VALUE);
-    }
-
-    if (mightBeDirty(entry)) {
-      reportDirtyChild(parent, entry);
-    } else {
-      reportCleanChild(parent, entry);
-    }
-
-    return parent;
-  }
-}
-
-// This is the most important method of the Entry API, because it
-// determines whether the cached entry.value can be returned immediately,
-// or must be recomputed. The overall performance of the caching system
-// depends on the truth of the following observations: (1) this.dirty is
-// usually false, (2) this.dirtyChildren is usually null/empty, and thus
-// (3) this.value is usally returned very quickly, without recomputation.
-function recomputeIfDirty(entry) {
-  if (entry.dirty) {
-    // If this Entry is explicitly dirty because someone called
-    // entry.setDirty(), recompute.
-    return reallyRecompute(entry);
-  }
-
-  if (mightBeDirty(entry)) {
-    // Get fresh values for any dirty children, and if those values
-    // disagree with this.childValues, mark this Entry explicitly dirty.
-    entry.dirtyChildren.forEach(function (child) {
-      assert(entry.childValues.has(child));
-      try {
-        recomputeIfDirty(child);
-      } catch (e) {
-        entry.setDirty();
-      }
-    });
-
-    if (entry.dirty) {
-      // If this Entry has become explicitly dirty after comparing the fresh
-      // values of its dirty children against this.childValues, recompute.
-      return reallyRecompute(entry);
-    }
-  }
-
-  assert(entry.value !== UNKNOWN_VALUE);
-
-  return entry.value;
-}
-
-function reallyRecompute(entry) {
-  assert(! entry.recomputing, "already recomputing");
-  entry.recomputing = true;
-
-  // Since this recomputation is likely to re-remember some of this
-  // entry's children, we forget our children here but do not call
-  // maybeReportOrphan until after the recomputation finishes.
-  var originalChildren = forgetChildren(entry);
-
-  var local = getLocal();
-  var parent = local.currentParentEntry;
-  local.currentParentEntry = entry;
-
-  var threw = true;
-  try {
-    entry.value = entry.fn.apply(null, entry.args);
-    threw = false;
-
-  } finally {
-    entry.recomputing = false;
-
-    assert(local.currentParentEntry === entry);
-    local.currentParentEntry = parent;
-
-    if (threw || ! subscribe(entry)) {
-      // Mark this Entry dirty if entry.fn threw or we failed to
-      // resubscribe. This is important because, if we have a subscribe
-      // function and it failed, then we're going to miss important
-      // notifications about the potential dirtiness of entry.value.
-      entry.setDirty();
-    } else {
-      // If we successfully recomputed entry.value and did not fail to
-      // (re)subscribe, then this Entry is no longer explicitly dirty.
-      setClean(entry);
-    }
-  }
-
-  // Now that we've had a chance to re-remember any children that were
-  // involved in the recomputation, we can safely report any orphan
-  // children that remain.
-  originalChildren.forEach(maybeReportOrphan);
-
-  return entry.value;
-}
-
-var reusableEmptyArray = [];
-
-// Removes all children from this entry and returns an array of the
-// removed children.
-function forgetChildren(entry) {
-  var children = reusableEmptyArray;
-
-  if (entry.childValues.size > 0) {
-    children = [];
-    entry.childValues.forEach(function (value, child) {
-      forgetChild(entry, child);
-      children.push(child);
-    });
-  }
-
-  // After we forget all our children, this.dirtyChildren must be empty
-  // and therefor must have been reset to null.
-  assert(entry.dirtyChildren === null);
-
-  return children;
-}
-
-function forgetChild(entry, child) {
-  child.parents.delete(entry);
-  entry.childValues.delete(child);
-  removeDirtyChild(entry, child);
-}
-
-function subscribe(entry) {
-  if (typeof entry.subscribe === "function") {
-    try {
-      unsubscribe(entry); // Prevent double subscriptions.
-      entry.unsubscribe = entry.subscribe.apply(null, entry.args);
-    } catch (e) {
-      // If this Entry has a subscribe function and it threw an exception
-      // (or an unsubscribe function it previously returned now throws),
-      // return false to indicate that we were not able to subscribe (or
-      // unsubscribe), and this Entry should remain dirty.
-      entry.setDirty();
-      return false;
-    }
-  }
-
-  // Returning true indicates either that there was no entry.subscribe
-  // function or that it succeeded.
-  return true;
-}
-
-function unsubscribe(entry) {
-  var unsub = entry.unsubscribe;
-  if (typeof unsub === "function") {
-    entry.unsubscribe = null;
-    unsub();
-  }
-}
-
-
-/***/ }),
-
-/***/ "./node_modules/optimism/lib/index.js":
-/*!********************************************!*\
-  !*** ./node_modules/optimism/lib/index.js ***!
-  \********************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var Cache = __webpack_require__(/*! ./cache.js */ "./node_modules/optimism/lib/cache.js").Cache;
-var tuple = __webpack_require__(/*! immutable-tuple */ "./node_modules/immutable-tuple/dist/tuple.mjs").tuple;
-var Entry = __webpack_require__(/*! ./entry.js */ "./node_modules/optimism/lib/entry.js").Entry;
-var getLocal = __webpack_require__(/*! ./local.js */ "./node_modules/optimism/lib/local.js").get;
-
-// Exported so that custom makeCacheKey functions can easily reuse the
-// default implementation (with different arguments).
-exports.defaultMakeCacheKey = tuple;
-
-function normalizeOptions(options) {
-  options = options || Object.create(null);
-
-  if (typeof options.makeCacheKey !== "function") {
-    options.makeCacheKey = tuple;
-  }
-
-  if (typeof options.max !== "number") {
-    options.max = Math.pow(2, 16);
-  }
-
-  return options;
-}
-
-function wrap(fn, options) {
-  options = normalizeOptions(options);
-
-  // If this wrapped function is disposable, then its creator does not
-  // care about its return value, and it should be removed from the cache
-  // immediately when it no longer has any parents that depend on it.
-  var disposable = !! options.disposable;
-
-  var cache = new Cache({
-    max: options.max,
-    dispose: function (key, entry) {
-      entry.dispose();
-    }
-  });
-
-  function reportOrphan(entry) {
-    if (disposable) {
-      // Triggers the entry.dispose() call above.
-      cache.delete(entry.key);
-      return true;
-    }
-  }
-
-  function optimistic() {
-    if (disposable && ! getLocal().currentParentEntry) {
-      // If there's no current parent computation, and this wrapped
-      // function is disposable (meaning we don't care about entry.value,
-      // just dependency tracking), then we can short-cut everything else
-      // in this function, because entry.recompute() is going to recycle
-      // the entry object without recomputing anything, anyway.
-      return;
-    }
-
-    var key = options.makeCacheKey.apply(null, arguments);
-    if (! key) {
-      return fn.apply(null, arguments);
-    }
-
-    var args = [], len = arguments.length;
-    while (len--) args[len] = arguments[len];
-
-    var entry = cache.get(key);
-    if (entry) {
-      entry.args = args;
-    } else {
-      cache.set(key, entry = Entry.acquire(fn, key, args));
-      entry.subscribe = options.subscribe;
-      if (disposable) {
-        entry.reportOrphan = reportOrphan;
-      }
-    }
-
-    var value = entry.recompute();
-
-    // Move this entry to the front of the least-recently used queue,
-    // since we just finished computing its value.
-    cache.set(key, entry);
-
-    // Clean up any excess entries in the cache, but only if this entry
-    // has no parents, which means we're not in the middle of a larger
-    // computation that might be flummoxed by the cleaning.
-    if (entry.parents.size === 0) {
-      cache.clean();
-    }
-
-    // If options.disposable is truthy, the caller of wrap is telling us
-    // they don't care about the result of entry.recompute(), so we should
-    // avoid returning the value, so it won't be accidentally used.
-    if (! disposable) {
-      return value;
-    }
-  }
-
-  optimistic.dirty = function () {
-    var key = options.makeCacheKey.apply(null, arguments);
-    if (! key) {
-      return;
-    }
-
-    if (! cache.has(key)) {
-      return;
-    }
-
-    cache.get(key).setDirty();
-  };
-
-  return optimistic;
-}
-
-exports.wrap = wrap;
-
-
-/***/ }),
-
-/***/ "./node_modules/optimism/lib/local.js":
-/*!********************************************!*\
-  !*** ./node_modules/optimism/lib/local.js ***!
-  \********************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(module) {
-
-var fakeNullFiber = new (function Fiber(){});
-var localKey = "_optimism_local";
-
-function getCurrentFiber() {
-  return fakeNullFiber;
-}
+var printWarning = function() {};
 
 if (true) {
-  try {
-    var Fiber = module["eriuqer".split("").reverse().join("")]("fibers");
-    // If we were able to require fibers, redefine the getCurrentFiber
-    // function so that it has a chance to return Fiber.current.
-    getCurrentFiber = function () {
-      return Fiber.current || fakeNullFiber;
-    };
-  } catch (e) {}
-}
+  var ReactPropTypesSecret = __webpack_require__(/*! ./lib/ReactPropTypesSecret */ "./node_modules/next/node_modules/prop-types/lib/ReactPropTypesSecret.js");
+  var loggedTypeFailures = {};
 
-// Returns an object unique to Fiber.current, if fibers are enabled.
-// This object is used for Fiber-local storage in ./entry.js.
-exports.get = function () {
-  var fiber = getCurrentFiber();
-  return fiber[localKey] || (fiber[localKey] = Object.create(null));
-};
-
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../webpack/buildin/module.js */ "./node_modules/webpack/buildin/module.js")(module)))
-
-/***/ }),
-
-/***/ "./node_modules/process/browser.js":
-/*!*****************************************!*\
-  !*** ./node_modules/process/browser.js ***!
-  \*****************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
+  printWarning = function(text) {
+    var message = 'Warning: ' + text;
+    if (typeof console !== 'undefined') {
+      console.error(message);
     }
     try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
+      // --- Welcome to debugging React ---
+      // This error was thrown as a convenience so that you can use this stack
+      // to find the callsite that caused this warning to fire.
+      throw new Error(message);
+    } catch (x) {}
+  };
+}
+
+/**
+ * Assert that the values match with the type specs.
+ * Error messages are memorized and will only be shown once.
+ *
+ * @param {object} typeSpecs Map of name to a ReactPropType
+ * @param {object} values Runtime values that need to be type-checked
+ * @param {string} location e.g. "prop", "context", "child context"
+ * @param {string} componentName Name of the component for error messages.
+ * @param {?Function} getStack Returns the component stack.
+ * @private
+ */
+function checkPropTypes(typeSpecs, values, location, componentName, getStack) {
+  if (true) {
+    for (var typeSpecName in typeSpecs) {
+      if (typeSpecs.hasOwnProperty(typeSpecName)) {
+        var error;
+        // Prop type validation may throw. In case they do, we don't want to
+        // fail the render phase where it didn't fail before. So we log it.
+        // After these have been cleaned up, we'll let them throw.
         try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
+          // This is intentionally an invariant that gets caught. It's the same
+          // behavior as without this statement except with a better message.
+          if (typeof typeSpecs[typeSpecName] !== 'function') {
+            var err = Error(
+              (componentName || 'React class') + ': ' + location + ' type `' + typeSpecName + '` is invalid; ' +
+              'it must be a function, usually from the `prop-types` package, but received `' + typeof typeSpecs[typeSpecName] + '`.'
+            );
+            err.name = 'Invariant Violation';
+            throw err;
+          }
+          error = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null, ReactPropTypesSecret);
+        } catch (ex) {
+          error = ex;
         }
-    }
+        if (error && !(error instanceof Error)) {
+          printWarning(
+            (componentName || 'React class') + ': type specification of ' +
+            location + ' `' + typeSpecName + '` is invalid; the type checker ' +
+            'function must return `null` or an `Error` but returned a ' + typeof error + '. ' +
+            'You may have forgotten to pass an argument to the type checker ' +
+            'creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and ' +
+            'shape all require an argument).'
+          )
 
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
         }
-    }
+        if (error instanceof Error && !(error.message in loggedTypeFailures)) {
+          // Only monitor this failure once because there tends to be a lot of the
+          // same error.
+          loggedTypeFailures[error.message] = true;
 
+          var stack = getStack ? getStack() : '';
 
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
+          printWarning(
+            'Failed ' + location + ' type: ' + error.message + (stack != null ? stack : '')
+          );
         }
-        queueIndex = -1;
-        len = queue.length;
+      }
     }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
+  }
 }
 
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
+module.exports = checkPropTypes;
 
 
 /***/ }),
 
-/***/ "./node_modules/prop-types/checkPropTypes.js":
-/*!*********************************************************************************************************!*\
-  !*** delegated ./node_modules/prop-types/checkPropTypes.js from dll-reference dll_1aef2d0bbc0d334d831c ***!
-  \*********************************************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = (__webpack_require__(/*! dll-reference dll_1aef2d0bbc0d334d831c */ "dll-reference dll_1aef2d0bbc0d334d831c"))("./node_modules/prop-types/checkPropTypes.js");
-
-/***/ }),
-
-/***/ "./node_modules/prop-types/factoryWithTypeCheckers.js":
-/*!************************************************************!*\
-  !*** ./node_modules/prop-types/factoryWithTypeCheckers.js ***!
-  \************************************************************/
+/***/ "./node_modules/next/node_modules/prop-types/factoryWithTypeCheckers.js":
+/*!******************************************************************************!*\
+  !*** ./node_modules/next/node_modules/prop-types/factoryWithTypeCheckers.js ***!
+  \******************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -20040,8 +19001,8 @@ module.exports = (__webpack_require__(/*! dll-reference dll_1aef2d0bbc0d334d831c
 
 var assign = __webpack_require__(/*! object-assign */ "./node_modules/object-assign/index.js");
 
-var ReactPropTypesSecret = __webpack_require__(/*! ./lib/ReactPropTypesSecret */ "./node_modules/prop-types/lib/ReactPropTypesSecret.js");
-var checkPropTypes = __webpack_require__(/*! ./checkPropTypes */ "./node_modules/prop-types/checkPropTypes.js");
+var ReactPropTypesSecret = __webpack_require__(/*! ./lib/ReactPropTypesSecret */ "./node_modules/next/node_modules/prop-types/lib/ReactPropTypesSecret.js");
+var checkPropTypes = __webpack_require__(/*! ./checkPropTypes */ "./node_modules/next/node_modules/prop-types/checkPropTypes.js");
 
 var printWarning = function() {};
 
@@ -20588,10 +19549,10 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
 /***/ }),
 
-/***/ "./node_modules/prop-types/index.js":
-/*!******************************************!*\
-  !*** ./node_modules/prop-types/index.js ***!
-  \******************************************/
+/***/ "./node_modules/next/node_modules/prop-types/index.js":
+/*!************************************************************!*\
+  !*** ./node_modules/next/node_modules/prop-types/index.js ***!
+  \************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -20617,7 +19578,1385 @@ if (true) {
   // By explicitly using `prop-types` you are opting into new development behavior.
   // http://fb.me/prop-types-in-prod
   var throwOnDirectAccess = true;
-  module.exports = __webpack_require__(/*! ./factoryWithTypeCheckers */ "./node_modules/prop-types/factoryWithTypeCheckers.js")(isValidElement, throwOnDirectAccess);
+  module.exports = __webpack_require__(/*! ./factoryWithTypeCheckers */ "./node_modules/next/node_modules/prop-types/factoryWithTypeCheckers.js")(isValidElement, throwOnDirectAccess);
+} else {}
+
+
+/***/ }),
+
+/***/ "./node_modules/next/node_modules/prop-types/lib/ReactPropTypesSecret.js":
+/*!*******************************************************************************!*\
+  !*** ./node_modules/next/node_modules/prop-types/lib/ReactPropTypesSecret.js ***!
+  \*******************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/**
+ * Copyright (c) 2013-present, Facebook, Inc.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+
+
+var ReactPropTypesSecret = 'SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED';
+
+module.exports = ReactPropTypesSecret;
+
+
+/***/ }),
+
+/***/ "./node_modules/object-assign/index.js":
+/*!***************************************************************************************************!*\
+  !*** delegated ./node_modules/object-assign/index.js from dll-reference dll_829b10deddf10e1653a8 ***!
+  \***************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = (__webpack_require__(/*! dll-reference dll_829b10deddf10e1653a8 */ "dll-reference dll_829b10deddf10e1653a8"))("./node_modules/object-assign/index.js");
+
+/***/ }),
+
+/***/ "./node_modules/optimism/lib/bundle.esm.js":
+/*!*************************************************!*\
+  !*** ./node_modules/optimism/lib/bundle.esm.js ***!
+  \*************************************************/
+/*! exports provided: bindContext, noContext, setTimeout, asyncFromGen, defaultMakeCacheKey, KeyTrie, wrap */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "defaultMakeCacheKey", function() { return defaultMakeCacheKey; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "KeyTrie", function() { return KeyTrie; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "wrap", function() { return wrap; });
+/* harmony import */ var _wry_context__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wry/context */ "./node_modules/@wry/context/lib/context.esm.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "bindContext", function() { return _wry_context__WEBPACK_IMPORTED_MODULE_0__["bind"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "noContext", function() { return _wry_context__WEBPACK_IMPORTED_MODULE_0__["noContext"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "setTimeout", function() { return _wry_context__WEBPACK_IMPORTED_MODULE_0__["setTimeout"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "asyncFromGen", function() { return _wry_context__WEBPACK_IMPORTED_MODULE_0__["asyncFromGen"]; });
+
+
+
+
+function defaultDispose() { }
+var Cache = /** @class */ (function () {
+    function Cache(max, dispose) {
+        if (max === void 0) { max = Infinity; }
+        if (dispose === void 0) { dispose = defaultDispose; }
+        this.max = max;
+        this.dispose = dispose;
+        this.map = new Map();
+        this.newest = null;
+        this.oldest = null;
+    }
+    Cache.prototype.has = function (key) {
+        return this.map.has(key);
+    };
+    Cache.prototype.get = function (key) {
+        var entry = this.getEntry(key);
+        return entry && entry.value;
+    };
+    Cache.prototype.getEntry = function (key) {
+        var entry = this.map.get(key);
+        if (entry && entry !== this.newest) {
+            var older = entry.older, newer = entry.newer;
+            if (newer) {
+                newer.older = older;
+            }
+            if (older) {
+                older.newer = newer;
+            }
+            entry.older = this.newest;
+            entry.older.newer = entry;
+            entry.newer = null;
+            this.newest = entry;
+            if (entry === this.oldest) {
+                this.oldest = newer;
+            }
+        }
+        return entry;
+    };
+    Cache.prototype.set = function (key, value) {
+        var entry = this.getEntry(key);
+        if (entry) {
+            return entry.value = value;
+        }
+        entry = {
+            key: key,
+            value: value,
+            newer: null,
+            older: this.newest
+        };
+        if (this.newest) {
+            this.newest.newer = entry;
+        }
+        this.newest = entry;
+        this.oldest = this.oldest || entry;
+        this.map.set(key, entry);
+        return entry.value;
+    };
+    Cache.prototype.clean = function () {
+        while (this.oldest && this.map.size > this.max) {
+            this["delete"](this.oldest.key);
+        }
+    };
+    Cache.prototype["delete"] = function (key) {
+        var entry = this.map.get(key);
+        if (entry) {
+            if (entry === this.newest) {
+                this.newest = entry.older;
+            }
+            if (entry === this.oldest) {
+                this.oldest = entry.newer;
+            }
+            if (entry.newer) {
+                entry.newer.older = entry.older;
+            }
+            if (entry.older) {
+                entry.older.newer = entry.newer;
+            }
+            this.map["delete"](key);
+            this.dispose(entry.value, key);
+            return true;
+        }
+        return false;
+    };
+    return Cache;
+}());
+
+var parentEntrySlot = new _wry_context__WEBPACK_IMPORTED_MODULE_0__["Slot"]();
+
+var UNKNOWN_VALUE = Object.create(null);
+var reusableEmptyArray = [];
+var emptySetPool = [];
+var POOL_TARGET_SIZE = 100;
+// Since this package might be used browsers, we should avoid using the
+// Node built-in assert module.
+function assert(condition, optionalMessage) {
+    if (!condition) {
+        throw new Error(optionalMessage || "assertion failure");
+    }
+}
+var Entry = /** @class */ (function () {
+    function Entry(fn, args) {
+        this.fn = fn;
+        this.args = args;
+        this.parents = new Set();
+        this.childValues = new Map();
+        // When this Entry has children that are dirty, this property becomes
+        // a Set containing other Entry objects, borrowed from emptySetPool.
+        // When the set becomes empty, it gets recycled back to emptySetPool.
+        this.dirtyChildren = null;
+        this.dirty = true;
+        this.recomputing = false;
+        this.value = UNKNOWN_VALUE;
+        ++Entry.count;
+    }
+    Entry.prototype.recompute = function () {
+        if (!rememberParent(this) && maybeReportOrphan(this)) {
+            // The recipient of the entry.reportOrphan callback decided to dispose
+            // of this orphan entry by calling entry.dispose(), so we don't need to
+            // (and should not) proceed with the recomputation.
+            return void 0;
+        }
+        return recomputeIfDirty(this);
+    };
+    Entry.prototype.setDirty = function () {
+        if (this.dirty)
+            return;
+        this.dirty = true;
+        this.value = UNKNOWN_VALUE;
+        reportDirty(this);
+        // We can go ahead and unsubscribe here, since any further dirty
+        // notifications we receive will be redundant, and unsubscribing may
+        // free up some resources, e.g. file watchers.
+        maybeUnsubscribe(this);
+    };
+    Entry.prototype.dispose = function () {
+        var _this = this;
+        forgetChildren(this).forEach(maybeReportOrphan);
+        maybeUnsubscribe(this);
+        // Because this entry has been kicked out of the cache (in index.js),
+        // we've lost the ability to find out if/when this entry becomes dirty,
+        // whether that happens through a subscription, because of a direct call
+        // to entry.setDirty(), or because one of its children becomes dirty.
+        // Because of this loss of future information, we have to assume the
+        // worst (that this entry might have become dirty very soon), so we must
+        // immediately mark this entry's parents as dirty. Normally we could
+        // just call entry.setDirty() rather than calling parent.setDirty() for
+        // each parent, but that would leave this entry in parent.childValues
+        // and parent.dirtyChildren, which would prevent the child from being
+        // truly forgotten.
+        this.parents.forEach(function (parent) {
+            parent.setDirty();
+            forgetChild(parent, _this);
+        });
+    };
+    Entry.count = 0;
+    return Entry;
+}());
+function rememberParent(child) {
+    var parent = parentEntrySlot.getValue();
+    if (parent) {
+        child.parents.add(parent);
+        if (!parent.childValues.has(child)) {
+            parent.childValues.set(child, UNKNOWN_VALUE);
+        }
+        if (mightBeDirty(child)) {
+            reportDirtyChild(parent, child);
+        }
+        else {
+            reportCleanChild(parent, child);
+        }
+        return parent;
+    }
+}
+// This is the most important method of the Entry API, because it
+// determines whether the cached entry.value can be returned immediately,
+// or must be recomputed. The overall performance of the caching system
+// depends on the truth of the following observations: (1) this.dirty is
+// usually false, (2) this.dirtyChildren is usually null/empty, and thus
+// (3) this.value is usally returned very quickly, without recomputation.
+function recomputeIfDirty(entry) {
+    if (entry.dirty) {
+        // If this Entry is explicitly dirty because someone called
+        // entry.setDirty(), recompute.
+        return reallyRecompute(entry);
+    }
+    if (mightBeDirty(entry)) {
+        // Get fresh values for any dirty children, and if those values
+        // disagree with this.childValues, mark this Entry explicitly dirty.
+        entry.dirtyChildren.forEach(function (child) {
+            assert(entry.childValues.has(child));
+            try {
+                recomputeIfDirty(child);
+            }
+            catch (e) {
+                entry.setDirty();
+            }
+        });
+        if (entry.dirty) {
+            // If this Entry has become explicitly dirty after comparing the fresh
+            // values of its dirty children against this.childValues, recompute.
+            return reallyRecompute(entry);
+        }
+    }
+    assert(entry.value !== UNKNOWN_VALUE);
+    return entry.value;
+}
+function reallyRecompute(entry) {
+    assert(!entry.recomputing, "already recomputing");
+    entry.recomputing = true;
+    // Since this recomputation is likely to re-remember some of this
+    // entry's children, we forget our children here but do not call
+    // maybeReportOrphan until after the recomputation finishes.
+    var originalChildren = forgetChildren(entry);
+    var threw = true;
+    try {
+        parentEntrySlot.withValue(entry, function () {
+            entry.value = entry.fn.apply(null, entry.args);
+        });
+        threw = false;
+    }
+    finally {
+        entry.recomputing = false;
+        if (threw || !maybeSubscribe(entry)) {
+            // Mark this Entry dirty if entry.fn threw or we failed to
+            // resubscribe. This is important because, if we have a subscribe
+            // function and it failed, then we're going to miss important
+            // notifications about the potential dirtiness of entry.value.
+            entry.setDirty();
+        }
+        else {
+            // If we successfully recomputed entry.value and did not fail to
+            // (re)subscribe, then this Entry is no longer explicitly dirty.
+            setClean(entry);
+        }
+    }
+    // Now that we've had a chance to re-remember any children that were
+    // involved in the recomputation, we can safely report any orphan
+    // children that remain.
+    originalChildren.forEach(maybeReportOrphan);
+    return entry.value;
+}
+function mightBeDirty(entry) {
+    return entry.dirty || !!(entry.dirtyChildren && entry.dirtyChildren.size);
+}
+function setClean(entry) {
+    entry.dirty = false;
+    if (mightBeDirty(entry)) {
+        // This Entry may still have dirty children, in which case we can't
+        // let our parents know we're clean just yet.
+        return;
+    }
+    reportClean(entry);
+}
+function reportDirty(child) {
+    child.parents.forEach(function (parent) { return reportDirtyChild(parent, child); });
+}
+function reportClean(child) {
+    child.parents.forEach(function (parent) { return reportCleanChild(parent, child); });
+}
+// Let a parent Entry know that one of its children may be dirty.
+function reportDirtyChild(parent, child) {
+    // Must have called rememberParent(child) before calling
+    // reportDirtyChild(parent, child).
+    assert(parent.childValues.has(child));
+    assert(mightBeDirty(child));
+    if (!parent.dirtyChildren) {
+        parent.dirtyChildren = emptySetPool.pop() || new Set;
+    }
+    else if (parent.dirtyChildren.has(child)) {
+        // If we already know this child is dirty, then we must have already
+        // informed our own parents that we are dirty, so we can terminate
+        // the recursion early.
+        return;
+    }
+    parent.dirtyChildren.add(child);
+    reportDirty(parent);
+}
+// Let a parent Entry know that one of its children is no longer dirty.
+function reportCleanChild(parent, child) {
+    // Must have called rememberChild(child) before calling
+    // reportCleanChild(parent, child).
+    assert(parent.childValues.has(child));
+    assert(!mightBeDirty(child));
+    var childValue = parent.childValues.get(child);
+    if (childValue === UNKNOWN_VALUE) {
+        parent.childValues.set(child, child.value);
+    }
+    else if (childValue !== child.value) {
+        parent.setDirty();
+    }
+    removeDirtyChild(parent, child);
+    if (mightBeDirty(parent)) {
+        return;
+    }
+    reportClean(parent);
+}
+function removeDirtyChild(parent, child) {
+    var dc = parent.dirtyChildren;
+    if (dc) {
+        dc["delete"](child);
+        if (dc.size === 0) {
+            if (emptySetPool.length < POOL_TARGET_SIZE) {
+                emptySetPool.push(dc);
+            }
+            parent.dirtyChildren = null;
+        }
+    }
+}
+// If the given entry has a reportOrphan method, and no remaining parents,
+// call entry.reportOrphan and return true iff it returns true. The
+// reportOrphan function should return true to indicate entry.dispose()
+// has been called, and the entry has been removed from any other caches
+// (see index.js for the only current example).
+function maybeReportOrphan(entry) {
+    return entry.parents.size === 0 &&
+        typeof entry.reportOrphan === "function" &&
+        entry.reportOrphan() === true;
+}
+// Removes all children from this entry and returns an array of the
+// removed children.
+function forgetChildren(parent) {
+    var children = reusableEmptyArray;
+    if (parent.childValues.size > 0) {
+        children = [];
+        parent.childValues.forEach(function (value, child) {
+            forgetChild(parent, child);
+            children.push(child);
+        });
+    }
+    // After we forget all our children, this.dirtyChildren must be empty
+    // and therefore must have been reset to null.
+    assert(parent.dirtyChildren === null);
+    return children;
+}
+function forgetChild(parent, child) {
+    child.parents["delete"](parent);
+    parent.childValues["delete"](child);
+    removeDirtyChild(parent, child);
+}
+function maybeSubscribe(entry) {
+    if (typeof entry.subscribe === "function") {
+        try {
+            maybeUnsubscribe(entry); // Prevent double subscriptions.
+            entry.unsubscribe = entry.subscribe.apply(null, entry.args);
+        }
+        catch (e) {
+            // If this Entry has a subscribe function and it threw an exception
+            // (or an unsubscribe function it previously returned now throws),
+            // return false to indicate that we were not able to subscribe (or
+            // unsubscribe), and this Entry should remain dirty.
+            entry.setDirty();
+            return false;
+        }
+    }
+    // Returning true indicates either that there was no entry.subscribe
+    // function or that it succeeded.
+    return true;
+}
+function maybeUnsubscribe(entry) {
+    var unsubscribe = entry.unsubscribe;
+    if (typeof unsubscribe === "function") {
+        entry.unsubscribe = void 0;
+        unsubscribe();
+    }
+}
+
+// A trie data structure that holds object keys weakly, yet can also hold
+// non-object keys, unlike the native `WeakMap`.
+var KeyTrie = /** @class */ (function () {
+    function KeyTrie(weakness) {
+        this.weakness = weakness;
+    }
+    KeyTrie.prototype.lookup = function () {
+        var array = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            array[_i] = arguments[_i];
+        }
+        return this.lookupArray(array);
+    };
+    KeyTrie.prototype.lookupArray = function (array) {
+        var node = this;
+        array.forEach(function (key) { return node = node.getChildTrie(key); });
+        return node.data || (node.data = Object.create(null));
+    };
+    KeyTrie.prototype.getChildTrie = function (key) {
+        var map = this.weakness && isObjRef(key)
+            ? this.weak || (this.weak = new WeakMap())
+            : this.strong || (this.strong = new Map());
+        var child = map.get(key);
+        if (!child)
+            map.set(key, child = new KeyTrie(this.weakness));
+        return child;
+    };
+    return KeyTrie;
+}());
+function isObjRef(value) {
+    switch (typeof value) {
+        case "object":
+            if (value === null)
+                break;
+        // Fall through to return true...
+        case "function":
+            return true;
+    }
+    return false;
+}
+
+// The defaultMakeCacheKey function is remarkably powerful, because it gives
+// a unique object for any shallow-identical list of arguments. If you need
+// to implement a custom makeCacheKey function, you may find it helpful to
+// delegate the final work to defaultMakeCacheKey, which is why we export it
+// here. However, you may want to avoid defaultMakeCacheKey if your runtime
+// does not support WeakMap, or you have the ability to return a string key.
+// In those cases, just write your own custom makeCacheKey functions.
+var keyTrie = new KeyTrie(typeof WeakMap === "function");
+function defaultMakeCacheKey() {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i] = arguments[_i];
+    }
+    return keyTrie.lookupArray(args);
+}
+function wrap(originalFunction, options) {
+    if (options === void 0) { options = Object.create(null); }
+    var cache = new Cache(options.max || Math.pow(2, 16), function (entry) { return entry.dispose(); });
+    var disposable = !!options.disposable;
+    var makeCacheKey = options.makeCacheKey || defaultMakeCacheKey;
+    function optimistic() {
+        if (disposable && !parentEntrySlot.hasValue()) {
+            // If there's no current parent computation, and this wrapped
+            // function is disposable (meaning we don't care about entry.value,
+            // just dependency tracking), then we can short-cut everything else
+            // in this function, because entry.recompute() is going to recycle
+            // the entry object without recomputing anything, anyway.
+            return void 0;
+        }
+        var key = makeCacheKey.apply(null, arguments);
+        if (!key) {
+            return originalFunction.apply(null, arguments);
+        }
+        var args = Array.prototype.slice.call(arguments);
+        var entry = cache.get(key);
+        if (entry) {
+            entry.args = args;
+        }
+        else {
+            entry = new Entry(originalFunction, args);
+            cache.set(key, entry);
+            entry.subscribe = options.subscribe;
+            if (disposable) {
+                entry.reportOrphan = function () { return cache["delete"](key); };
+            }
+        }
+        var value = entry.recompute();
+        // Move this entry to the front of the least-recently used queue,
+        // since we just finished computing its value.
+        cache.set(key, entry);
+        // Clean up any excess entries in the cache, but only if there is no
+        // active parent entry, meaning we're not in the middle of a larger
+        // computation that might be flummoxed by the cleaning.
+        if (!parentEntrySlot.hasValue()) {
+            cache.clean();
+        }
+        // If options.disposable is truthy, the caller of wrap is telling us
+        // they don't care about the result of entry.recompute(), so we should
+        // avoid returning the value, so it won't be accidentally used.
+        return disposable ? void 0 : value;
+    }
+    optimistic.dirty = function () {
+        var key = makeCacheKey.apply(null, arguments);
+        var child = key && cache.get(key);
+        if (child) {
+            child.setDirty();
+        }
+    };
+    return optimistic;
+}
+
+
+//# sourceMappingURL=bundle.esm.js.map
+
+
+/***/ }),
+
+/***/ "./node_modules/process/browser.js":
+/*!*****************************************!*\
+  !*** ./node_modules/process/browser.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+
+/***/ }),
+
+/***/ "./node_modules/prop-types/checkPropTypes.js":
+/*!*********************************************************************************************************!*\
+  !*** delegated ./node_modules/prop-types/checkPropTypes.js from dll-reference dll_829b10deddf10e1653a8 ***!
+  \*********************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = (__webpack_require__(/*! dll-reference dll_829b10deddf10e1653a8 */ "dll-reference dll_829b10deddf10e1653a8"))("./node_modules/prop-types/checkPropTypes.js");
+
+/***/ }),
+
+/***/ "./node_modules/prop-types/factoryWithTypeCheckers.js":
+/*!************************************************************!*\
+  !*** ./node_modules/prop-types/factoryWithTypeCheckers.js ***!
+  \************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/**
+ * Copyright (c) 2013-present, Facebook, Inc.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+
+
+var ReactIs = __webpack_require__(/*! react-is */ "./node_modules/react-is/index.js");
+var assign = __webpack_require__(/*! object-assign */ "./node_modules/object-assign/index.js");
+
+var ReactPropTypesSecret = __webpack_require__(/*! ./lib/ReactPropTypesSecret */ "./node_modules/prop-types/lib/ReactPropTypesSecret.js");
+var checkPropTypes = __webpack_require__(/*! ./checkPropTypes */ "./node_modules/prop-types/checkPropTypes.js");
+
+var has = Function.call.bind(Object.prototype.hasOwnProperty);
+var printWarning = function() {};
+
+if (true) {
+  printWarning = function(text) {
+    var message = 'Warning: ' + text;
+    if (typeof console !== 'undefined') {
+      console.error(message);
+    }
+    try {
+      // --- Welcome to debugging React ---
+      // This error was thrown as a convenience so that you can use this stack
+      // to find the callsite that caused this warning to fire.
+      throw new Error(message);
+    } catch (x) {}
+  };
+}
+
+function emptyFunctionThatReturnsNull() {
+  return null;
+}
+
+module.exports = function(isValidElement, throwOnDirectAccess) {
+  /* global Symbol */
+  var ITERATOR_SYMBOL = typeof Symbol === 'function' && Symbol.iterator;
+  var FAUX_ITERATOR_SYMBOL = '@@iterator'; // Before Symbol spec.
+
+  /**
+   * Returns the iterator method function contained on the iterable object.
+   *
+   * Be sure to invoke the function with the iterable as context:
+   *
+   *     var iteratorFn = getIteratorFn(myIterable);
+   *     if (iteratorFn) {
+   *       var iterator = iteratorFn.call(myIterable);
+   *       ...
+   *     }
+   *
+   * @param {?object} maybeIterable
+   * @return {?function}
+   */
+  function getIteratorFn(maybeIterable) {
+    var iteratorFn = maybeIterable && (ITERATOR_SYMBOL && maybeIterable[ITERATOR_SYMBOL] || maybeIterable[FAUX_ITERATOR_SYMBOL]);
+    if (typeof iteratorFn === 'function') {
+      return iteratorFn;
+    }
+  }
+
+  /**
+   * Collection of methods that allow declaration and validation of props that are
+   * supplied to React components. Example usage:
+   *
+   *   var Props = require('ReactPropTypes');
+   *   var MyArticle = React.createClass({
+   *     propTypes: {
+   *       // An optional string prop named "description".
+   *       description: Props.string,
+   *
+   *       // A required enum prop named "category".
+   *       category: Props.oneOf(['News','Photos']).isRequired,
+   *
+   *       // A prop named "dialog" that requires an instance of Dialog.
+   *       dialog: Props.instanceOf(Dialog).isRequired
+   *     },
+   *     render: function() { ... }
+   *   });
+   *
+   * A more formal specification of how these methods are used:
+   *
+   *   type := array|bool|func|object|number|string|oneOf([...])|instanceOf(...)
+   *   decl := ReactPropTypes.{type}(.isRequired)?
+   *
+   * Each and every declaration produces a function with the same signature. This
+   * allows the creation of custom validation functions. For example:
+   *
+   *  var MyLink = React.createClass({
+   *    propTypes: {
+   *      // An optional string or URI prop named "href".
+   *      href: function(props, propName, componentName) {
+   *        var propValue = props[propName];
+   *        if (propValue != null && typeof propValue !== 'string' &&
+   *            !(propValue instanceof URI)) {
+   *          return new Error(
+   *            'Expected a string or an URI for ' + propName + ' in ' +
+   *            componentName
+   *          );
+   *        }
+   *      }
+   *    },
+   *    render: function() {...}
+   *  });
+   *
+   * @internal
+   */
+
+  var ANONYMOUS = '<<anonymous>>';
+
+  // Important!
+  // Keep this list in sync with production version in `./factoryWithThrowingShims.js`.
+  var ReactPropTypes = {
+    array: createPrimitiveTypeChecker('array'),
+    bool: createPrimitiveTypeChecker('boolean'),
+    func: createPrimitiveTypeChecker('function'),
+    number: createPrimitiveTypeChecker('number'),
+    object: createPrimitiveTypeChecker('object'),
+    string: createPrimitiveTypeChecker('string'),
+    symbol: createPrimitiveTypeChecker('symbol'),
+
+    any: createAnyTypeChecker(),
+    arrayOf: createArrayOfTypeChecker,
+    element: createElementTypeChecker(),
+    elementType: createElementTypeTypeChecker(),
+    instanceOf: createInstanceTypeChecker,
+    node: createNodeChecker(),
+    objectOf: createObjectOfTypeChecker,
+    oneOf: createEnumTypeChecker,
+    oneOfType: createUnionTypeChecker,
+    shape: createShapeTypeChecker,
+    exact: createStrictShapeTypeChecker,
+  };
+
+  /**
+   * inlined Object.is polyfill to avoid requiring consumers ship their own
+   * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is
+   */
+  /*eslint-disable no-self-compare*/
+  function is(x, y) {
+    // SameValue algorithm
+    if (x === y) {
+      // Steps 1-5, 7-10
+      // Steps 6.b-6.e: +0 != -0
+      return x !== 0 || 1 / x === 1 / y;
+    } else {
+      // Step 6.a: NaN == NaN
+      return x !== x && y !== y;
+    }
+  }
+  /*eslint-enable no-self-compare*/
+
+  /**
+   * We use an Error-like object for backward compatibility as people may call
+   * PropTypes directly and inspect their output. However, we don't use real
+   * Errors anymore. We don't inspect their stack anyway, and creating them
+   * is prohibitively expensive if they are created too often, such as what
+   * happens in oneOfType() for any type before the one that matched.
+   */
+  function PropTypeError(message) {
+    this.message = message;
+    this.stack = '';
+  }
+  // Make `instanceof Error` still work for returned errors.
+  PropTypeError.prototype = Error.prototype;
+
+  function createChainableTypeChecker(validate) {
+    if (true) {
+      var manualPropTypeCallCache = {};
+      var manualPropTypeWarningCount = 0;
+    }
+    function checkType(isRequired, props, propName, componentName, location, propFullName, secret) {
+      componentName = componentName || ANONYMOUS;
+      propFullName = propFullName || propName;
+
+      if (secret !== ReactPropTypesSecret) {
+        if (throwOnDirectAccess) {
+          // New behavior only for users of `prop-types` package
+          var err = new Error(
+            'Calling PropTypes validators directly is not supported by the `prop-types` package. ' +
+            'Use `PropTypes.checkPropTypes()` to call them. ' +
+            'Read more at http://fb.me/use-check-prop-types'
+          );
+          err.name = 'Invariant Violation';
+          throw err;
+        } else if ( true && typeof console !== 'undefined') {
+          // Old behavior for people using React.PropTypes
+          var cacheKey = componentName + ':' + propName;
+          if (
+            !manualPropTypeCallCache[cacheKey] &&
+            // Avoid spamming the console because they are often not actionable except for lib authors
+            manualPropTypeWarningCount < 3
+          ) {
+            printWarning(
+              'You are manually calling a React.PropTypes validation ' +
+              'function for the `' + propFullName + '` prop on `' + componentName  + '`. This is deprecated ' +
+              'and will throw in the standalone `prop-types` package. ' +
+              'You may be seeing this warning due to a third-party PropTypes ' +
+              'library. See https://fb.me/react-warning-dont-call-proptypes ' + 'for details.'
+            );
+            manualPropTypeCallCache[cacheKey] = true;
+            manualPropTypeWarningCount++;
+          }
+        }
+      }
+      if (props[propName] == null) {
+        if (isRequired) {
+          if (props[propName] === null) {
+            return new PropTypeError('The ' + location + ' `' + propFullName + '` is marked as required ' + ('in `' + componentName + '`, but its value is `null`.'));
+          }
+          return new PropTypeError('The ' + location + ' `' + propFullName + '` is marked as required in ' + ('`' + componentName + '`, but its value is `undefined`.'));
+        }
+        return null;
+      } else {
+        return validate(props, propName, componentName, location, propFullName);
+      }
+    }
+
+    var chainedCheckType = checkType.bind(null, false);
+    chainedCheckType.isRequired = checkType.bind(null, true);
+
+    return chainedCheckType;
+  }
+
+  function createPrimitiveTypeChecker(expectedType) {
+    function validate(props, propName, componentName, location, propFullName, secret) {
+      var propValue = props[propName];
+      var propType = getPropType(propValue);
+      if (propType !== expectedType) {
+        // `propValue` being instance of, say, date/regexp, pass the 'object'
+        // check, but we can offer a more precise error message here rather than
+        // 'of type `object`'.
+        var preciseType = getPreciseType(propValue);
+
+        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + preciseType + '` supplied to `' + componentName + '`, expected ') + ('`' + expectedType + '`.'));
+      }
+      return null;
+    }
+    return createChainableTypeChecker(validate);
+  }
+
+  function createAnyTypeChecker() {
+    return createChainableTypeChecker(emptyFunctionThatReturnsNull);
+  }
+
+  function createArrayOfTypeChecker(typeChecker) {
+    function validate(props, propName, componentName, location, propFullName) {
+      if (typeof typeChecker !== 'function') {
+        return new PropTypeError('Property `' + propFullName + '` of component `' + componentName + '` has invalid PropType notation inside arrayOf.');
+      }
+      var propValue = props[propName];
+      if (!Array.isArray(propValue)) {
+        var propType = getPropType(propValue);
+        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected an array.'));
+      }
+      for (var i = 0; i < propValue.length; i++) {
+        var error = typeChecker(propValue, i, componentName, location, propFullName + '[' + i + ']', ReactPropTypesSecret);
+        if (error instanceof Error) {
+          return error;
+        }
+      }
+      return null;
+    }
+    return createChainableTypeChecker(validate);
+  }
+
+  function createElementTypeChecker() {
+    function validate(props, propName, componentName, location, propFullName) {
+      var propValue = props[propName];
+      if (!isValidElement(propValue)) {
+        var propType = getPropType(propValue);
+        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected a single ReactElement.'));
+      }
+      return null;
+    }
+    return createChainableTypeChecker(validate);
+  }
+
+  function createElementTypeTypeChecker() {
+    function validate(props, propName, componentName, location, propFullName) {
+      var propValue = props[propName];
+      if (!ReactIs.isValidElementType(propValue)) {
+        var propType = getPropType(propValue);
+        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected a single ReactElement type.'));
+      }
+      return null;
+    }
+    return createChainableTypeChecker(validate);
+  }
+
+  function createInstanceTypeChecker(expectedClass) {
+    function validate(props, propName, componentName, location, propFullName) {
+      if (!(props[propName] instanceof expectedClass)) {
+        var expectedClassName = expectedClass.name || ANONYMOUS;
+        var actualClassName = getClassName(props[propName]);
+        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + actualClassName + '` supplied to `' + componentName + '`, expected ') + ('instance of `' + expectedClassName + '`.'));
+      }
+      return null;
+    }
+    return createChainableTypeChecker(validate);
+  }
+
+  function createEnumTypeChecker(expectedValues) {
+    if (!Array.isArray(expectedValues)) {
+      if (true) {
+        if (arguments.length > 1) {
+          printWarning(
+            'Invalid arguments supplied to oneOf, expected an array, got ' + arguments.length + ' arguments. ' +
+            'A common mistake is to write oneOf(x, y, z) instead of oneOf([x, y, z]).'
+          );
+        } else {
+          printWarning('Invalid argument supplied to oneOf, expected an array.');
+        }
+      }
+      return emptyFunctionThatReturnsNull;
+    }
+
+    function validate(props, propName, componentName, location, propFullName) {
+      var propValue = props[propName];
+      for (var i = 0; i < expectedValues.length; i++) {
+        if (is(propValue, expectedValues[i])) {
+          return null;
+        }
+      }
+
+      var valuesString = JSON.stringify(expectedValues, function replacer(key, value) {
+        var type = getPreciseType(value);
+        if (type === 'symbol') {
+          return String(value);
+        }
+        return value;
+      });
+      return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of value `' + String(propValue) + '` ' + ('supplied to `' + componentName + '`, expected one of ' + valuesString + '.'));
+    }
+    return createChainableTypeChecker(validate);
+  }
+
+  function createObjectOfTypeChecker(typeChecker) {
+    function validate(props, propName, componentName, location, propFullName) {
+      if (typeof typeChecker !== 'function') {
+        return new PropTypeError('Property `' + propFullName + '` of component `' + componentName + '` has invalid PropType notation inside objectOf.');
+      }
+      var propValue = props[propName];
+      var propType = getPropType(propValue);
+      if (propType !== 'object') {
+        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected an object.'));
+      }
+      for (var key in propValue) {
+        if (has(propValue, key)) {
+          var error = typeChecker(propValue, key, componentName, location, propFullName + '.' + key, ReactPropTypesSecret);
+          if (error instanceof Error) {
+            return error;
+          }
+        }
+      }
+      return null;
+    }
+    return createChainableTypeChecker(validate);
+  }
+
+  function createUnionTypeChecker(arrayOfTypeCheckers) {
+    if (!Array.isArray(arrayOfTypeCheckers)) {
+       true ? printWarning('Invalid argument supplied to oneOfType, expected an instance of array.') : undefined;
+      return emptyFunctionThatReturnsNull;
+    }
+
+    for (var i = 0; i < arrayOfTypeCheckers.length; i++) {
+      var checker = arrayOfTypeCheckers[i];
+      if (typeof checker !== 'function') {
+        printWarning(
+          'Invalid argument supplied to oneOfType. Expected an array of check functions, but ' +
+          'received ' + getPostfixForTypeWarning(checker) + ' at index ' + i + '.'
+        );
+        return emptyFunctionThatReturnsNull;
+      }
+    }
+
+    function validate(props, propName, componentName, location, propFullName) {
+      for (var i = 0; i < arrayOfTypeCheckers.length; i++) {
+        var checker = arrayOfTypeCheckers[i];
+        if (checker(props, propName, componentName, location, propFullName, ReactPropTypesSecret) == null) {
+          return null;
+        }
+      }
+
+      return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` supplied to ' + ('`' + componentName + '`.'));
+    }
+    return createChainableTypeChecker(validate);
+  }
+
+  function createNodeChecker() {
+    function validate(props, propName, componentName, location, propFullName) {
+      if (!isNode(props[propName])) {
+        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` supplied to ' + ('`' + componentName + '`, expected a ReactNode.'));
+      }
+      return null;
+    }
+    return createChainableTypeChecker(validate);
+  }
+
+  function createShapeTypeChecker(shapeTypes) {
+    function validate(props, propName, componentName, location, propFullName) {
+      var propValue = props[propName];
+      var propType = getPropType(propValue);
+      if (propType !== 'object') {
+        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type `' + propType + '` ' + ('supplied to `' + componentName + '`, expected `object`.'));
+      }
+      for (var key in shapeTypes) {
+        var checker = shapeTypes[key];
+        if (!checker) {
+          continue;
+        }
+        var error = checker(propValue, key, componentName, location, propFullName + '.' + key, ReactPropTypesSecret);
+        if (error) {
+          return error;
+        }
+      }
+      return null;
+    }
+    return createChainableTypeChecker(validate);
+  }
+
+  function createStrictShapeTypeChecker(shapeTypes) {
+    function validate(props, propName, componentName, location, propFullName) {
+      var propValue = props[propName];
+      var propType = getPropType(propValue);
+      if (propType !== 'object') {
+        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type `' + propType + '` ' + ('supplied to `' + componentName + '`, expected `object`.'));
+      }
+      // We need to check all keys in case some are required but missing from
+      // props.
+      var allKeys = assign({}, props[propName], shapeTypes);
+      for (var key in allKeys) {
+        var checker = shapeTypes[key];
+        if (!checker) {
+          return new PropTypeError(
+            'Invalid ' + location + ' `' + propFullName + '` key `' + key + '` supplied to `' + componentName + '`.' +
+            '\nBad object: ' + JSON.stringify(props[propName], null, '  ') +
+            '\nValid keys: ' +  JSON.stringify(Object.keys(shapeTypes), null, '  ')
+          );
+        }
+        var error = checker(propValue, key, componentName, location, propFullName + '.' + key, ReactPropTypesSecret);
+        if (error) {
+          return error;
+        }
+      }
+      return null;
+    }
+
+    return createChainableTypeChecker(validate);
+  }
+
+  function isNode(propValue) {
+    switch (typeof propValue) {
+      case 'number':
+      case 'string':
+      case 'undefined':
+        return true;
+      case 'boolean':
+        return !propValue;
+      case 'object':
+        if (Array.isArray(propValue)) {
+          return propValue.every(isNode);
+        }
+        if (propValue === null || isValidElement(propValue)) {
+          return true;
+        }
+
+        var iteratorFn = getIteratorFn(propValue);
+        if (iteratorFn) {
+          var iterator = iteratorFn.call(propValue);
+          var step;
+          if (iteratorFn !== propValue.entries) {
+            while (!(step = iterator.next()).done) {
+              if (!isNode(step.value)) {
+                return false;
+              }
+            }
+          } else {
+            // Iterator will provide entry [k,v] tuples rather than values.
+            while (!(step = iterator.next()).done) {
+              var entry = step.value;
+              if (entry) {
+                if (!isNode(entry[1])) {
+                  return false;
+                }
+              }
+            }
+          }
+        } else {
+          return false;
+        }
+
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  function isSymbol(propType, propValue) {
+    // Native Symbol.
+    if (propType === 'symbol') {
+      return true;
+    }
+
+    // falsy value can't be a Symbol
+    if (!propValue) {
+      return false;
+    }
+
+    // 19.4.3.5 Symbol.prototype[@@toStringTag] === 'Symbol'
+    if (propValue['@@toStringTag'] === 'Symbol') {
+      return true;
+    }
+
+    // Fallback for non-spec compliant Symbols which are polyfilled.
+    if (typeof Symbol === 'function' && propValue instanceof Symbol) {
+      return true;
+    }
+
+    return false;
+  }
+
+  // Equivalent of `typeof` but with special handling for array and regexp.
+  function getPropType(propValue) {
+    var propType = typeof propValue;
+    if (Array.isArray(propValue)) {
+      return 'array';
+    }
+    if (propValue instanceof RegExp) {
+      // Old webkits (at least until Android 4.0) return 'function' rather than
+      // 'object' for typeof a RegExp. We'll normalize this here so that /bla/
+      // passes PropTypes.object.
+      return 'object';
+    }
+    if (isSymbol(propType, propValue)) {
+      return 'symbol';
+    }
+    return propType;
+  }
+
+  // This handles more types than `getPropType`. Only used for error messages.
+  // See `createPrimitiveTypeChecker`.
+  function getPreciseType(propValue) {
+    if (typeof propValue === 'undefined' || propValue === null) {
+      return '' + propValue;
+    }
+    var propType = getPropType(propValue);
+    if (propType === 'object') {
+      if (propValue instanceof Date) {
+        return 'date';
+      } else if (propValue instanceof RegExp) {
+        return 'regexp';
+      }
+    }
+    return propType;
+  }
+
+  // Returns a string that is postfixed to a warning about an invalid type.
+  // For example, "undefined" or "of type array"
+  function getPostfixForTypeWarning(value) {
+    var type = getPreciseType(value);
+    switch (type) {
+      case 'array':
+      case 'object':
+        return 'an ' + type;
+      case 'boolean':
+      case 'date':
+      case 'regexp':
+        return 'a ' + type;
+      default:
+        return type;
+    }
+  }
+
+  // Returns class name of the object, if any.
+  function getClassName(propValue) {
+    if (!propValue.constructor || !propValue.constructor.name) {
+      return ANONYMOUS;
+    }
+    return propValue.constructor.name;
+  }
+
+  ReactPropTypes.checkPropTypes = checkPropTypes;
+  ReactPropTypes.resetWarningCache = checkPropTypes.resetWarningCache;
+  ReactPropTypes.PropTypes = ReactPropTypes;
+
+  return ReactPropTypes;
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/prop-types/index.js":
+/*!******************************************!*\
+  !*** ./node_modules/prop-types/index.js ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * Copyright (c) 2013-present, Facebook, Inc.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+if (true) {
+  var ReactIs = __webpack_require__(/*! react-is */ "./node_modules/react-is/index.js");
+
+  // By explicitly using `prop-types` you are opting into new development behavior.
+  // http://fb.me/prop-types-in-prod
+  var throwOnDirectAccess = true;
+  module.exports = __webpack_require__(/*! ./factoryWithTypeCheckers */ "./node_modules/prop-types/factoryWithTypeCheckers.js")(ReactIs.isElement, throwOnDirectAccess);
 } else {}
 
 
@@ -20625,12 +20964,12 @@ if (true) {
 
 /***/ "./node_modules/prop-types/lib/ReactPropTypesSecret.js":
 /*!*******************************************************************************************************************!*\
-  !*** delegated ./node_modules/prop-types/lib/ReactPropTypesSecret.js from dll-reference dll_1aef2d0bbc0d334d831c ***!
+  !*** delegated ./node_modules/prop-types/lib/ReactPropTypesSecret.js from dll-reference dll_829b10deddf10e1653a8 ***!
   \*******************************************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = (__webpack_require__(/*! dll-reference dll_1aef2d0bbc0d334d831c */ "dll-reference dll_1aef2d0bbc0d334d831c"))("./node_modules/prop-types/lib/ReactPropTypesSecret.js");
+module.exports = (__webpack_require__(/*! dll-reference dll_829b10deddf10e1653a8 */ "dll-reference dll_829b10deddf10e1653a8"))("./node_modules/prop-types/lib/ReactPropTypesSecret.js");
 
 /***/ }),
 
@@ -21374,1223 +21713,6 @@ exports.encode = exports.stringify = __webpack_require__(/*! ./encode */ "./node
 
 /***/ }),
 
-/***/ "./node_modules/react-apollo/node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js":
-/*!************************************************************************************************************!*\
-  !*** ./node_modules/react-apollo/node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js ***!
-  \************************************************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * Copyright 2015, Yahoo! Inc.
- * Copyrights licensed under the New BSD License. See the accompanying LICENSE file for terms.
- */
-var ReactIs = __webpack_require__(/*! react-is */ "./node_modules/react-apollo/node_modules/react-is/index.js");
-var REACT_STATICS = {
-    childContextTypes: true,
-    contextType: true,
-    contextTypes: true,
-    defaultProps: true,
-    displayName: true,
-    getDefaultProps: true,
-    getDerivedStateFromError: true,
-    getDerivedStateFromProps: true,
-    mixins: true,
-    propTypes: true,
-    type: true
-};
-
-var KNOWN_STATICS = {
-    name: true,
-    length: true,
-    prototype: true,
-    caller: true,
-    callee: true,
-    arguments: true,
-    arity: true
-};
-
-var FORWARD_REF_STATICS = {
-    '$$typeof': true,
-    render: true,
-    defaultProps: true,
-    displayName: true,
-    propTypes: true
-};
-
-var MEMO_STATICS = {
-    '$$typeof': true,
-    compare: true,
-    defaultProps: true,
-    displayName: true,
-    propTypes: true,
-    type: true
-};
-
-var TYPE_STATICS = {};
-TYPE_STATICS[ReactIs.ForwardRef] = FORWARD_REF_STATICS;
-
-function getStatics(component) {
-    if (ReactIs.isMemo(component)) {
-        return MEMO_STATICS;
-    }
-    return TYPE_STATICS[component['$$typeof']] || REACT_STATICS;
-}
-
-var defineProperty = Object.defineProperty;
-var getOwnPropertyNames = Object.getOwnPropertyNames;
-var getOwnPropertySymbols = Object.getOwnPropertySymbols;
-var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
-var getPrototypeOf = Object.getPrototypeOf;
-var objectPrototype = Object.prototype;
-
-function hoistNonReactStatics(targetComponent, sourceComponent, blacklist) {
-    if (typeof sourceComponent !== 'string') {
-        // don't hoist over string (html) components
-
-        if (objectPrototype) {
-            var inheritedComponent = getPrototypeOf(sourceComponent);
-            if (inheritedComponent && inheritedComponent !== objectPrototype) {
-                hoistNonReactStatics(targetComponent, inheritedComponent, blacklist);
-            }
-        }
-
-        var keys = getOwnPropertyNames(sourceComponent);
-
-        if (getOwnPropertySymbols) {
-            keys = keys.concat(getOwnPropertySymbols(sourceComponent));
-        }
-
-        var targetStatics = getStatics(targetComponent);
-        var sourceStatics = getStatics(sourceComponent);
-
-        for (var i = 0; i < keys.length; ++i) {
-            var key = keys[i];
-            if (!KNOWN_STATICS[key] && !(blacklist && blacklist[key]) && !(sourceStatics && sourceStatics[key]) && !(targetStatics && targetStatics[key])) {
-                var descriptor = getOwnPropertyDescriptor(sourceComponent, key);
-                try {
-                    // Avoid failures from read-only properties
-                    defineProperty(targetComponent, key, descriptor);
-                } catch (e) {}
-            }
-        }
-
-        return targetComponent;
-    }
-
-    return targetComponent;
-}
-
-module.exports = hoistNonReactStatics;
-
-
-/***/ }),
-
-/***/ "./node_modules/react-apollo/node_modules/prop-types/checkPropTypes.js":
-/*!*****************************************************************************!*\
-  !*** ./node_modules/react-apollo/node_modules/prop-types/checkPropTypes.js ***!
-  \*****************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/**
- * Copyright (c) 2013-present, Facebook, Inc.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
-
-
-var printWarning = function() {};
-
-if (true) {
-  var ReactPropTypesSecret = __webpack_require__(/*! ./lib/ReactPropTypesSecret */ "./node_modules/react-apollo/node_modules/prop-types/lib/ReactPropTypesSecret.js");
-  var loggedTypeFailures = {};
-  var has = Function.call.bind(Object.prototype.hasOwnProperty);
-
-  printWarning = function(text) {
-    var message = 'Warning: ' + text;
-    if (typeof console !== 'undefined') {
-      console.error(message);
-    }
-    try {
-      // --- Welcome to debugging React ---
-      // This error was thrown as a convenience so that you can use this stack
-      // to find the callsite that caused this warning to fire.
-      throw new Error(message);
-    } catch (x) {}
-  };
-}
-
-/**
- * Assert that the values match with the type specs.
- * Error messages are memorized and will only be shown once.
- *
- * @param {object} typeSpecs Map of name to a ReactPropType
- * @param {object} values Runtime values that need to be type-checked
- * @param {string} location e.g. "prop", "context", "child context"
- * @param {string} componentName Name of the component for error messages.
- * @param {?Function} getStack Returns the component stack.
- * @private
- */
-function checkPropTypes(typeSpecs, values, location, componentName, getStack) {
-  if (true) {
-    for (var typeSpecName in typeSpecs) {
-      if (has(typeSpecs, typeSpecName)) {
-        var error;
-        // Prop type validation may throw. In case they do, we don't want to
-        // fail the render phase where it didn't fail before. So we log it.
-        // After these have been cleaned up, we'll let them throw.
-        try {
-          // This is intentionally an invariant that gets caught. It's the same
-          // behavior as without this statement except with a better message.
-          if (typeof typeSpecs[typeSpecName] !== 'function') {
-            var err = Error(
-              (componentName || 'React class') + ': ' + location + ' type `' + typeSpecName + '` is invalid; ' +
-              'it must be a function, usually from the `prop-types` package, but received `' + typeof typeSpecs[typeSpecName] + '`.'
-            );
-            err.name = 'Invariant Violation';
-            throw err;
-          }
-          error = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null, ReactPropTypesSecret);
-        } catch (ex) {
-          error = ex;
-        }
-        if (error && !(error instanceof Error)) {
-          printWarning(
-            (componentName || 'React class') + ': type specification of ' +
-            location + ' `' + typeSpecName + '` is invalid; the type checker ' +
-            'function must return `null` or an `Error` but returned a ' + typeof error + '. ' +
-            'You may have forgotten to pass an argument to the type checker ' +
-            'creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and ' +
-            'shape all require an argument).'
-          );
-        }
-        if (error instanceof Error && !(error.message in loggedTypeFailures)) {
-          // Only monitor this failure once because there tends to be a lot of the
-          // same error.
-          loggedTypeFailures[error.message] = true;
-
-          var stack = getStack ? getStack() : '';
-
-          printWarning(
-            'Failed ' + location + ' type: ' + error.message + (stack != null ? stack : '')
-          );
-        }
-      }
-    }
-  }
-}
-
-/**
- * Resets warning cache when testing.
- *
- * @private
- */
-checkPropTypes.resetWarningCache = function() {
-  if (true) {
-    loggedTypeFailures = {};
-  }
-}
-
-module.exports = checkPropTypes;
-
-
-/***/ }),
-
-/***/ "./node_modules/react-apollo/node_modules/prop-types/factoryWithTypeCheckers.js":
-/*!**************************************************************************************!*\
-  !*** ./node_modules/react-apollo/node_modules/prop-types/factoryWithTypeCheckers.js ***!
-  \**************************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/**
- * Copyright (c) 2013-present, Facebook, Inc.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
-
-
-var ReactIs = __webpack_require__(/*! react-is */ "./node_modules/react-apollo/node_modules/react-is/index.js");
-var assign = __webpack_require__(/*! object-assign */ "./node_modules/object-assign/index.js");
-
-var ReactPropTypesSecret = __webpack_require__(/*! ./lib/ReactPropTypesSecret */ "./node_modules/react-apollo/node_modules/prop-types/lib/ReactPropTypesSecret.js");
-var checkPropTypes = __webpack_require__(/*! ./checkPropTypes */ "./node_modules/react-apollo/node_modules/prop-types/checkPropTypes.js");
-
-var has = Function.call.bind(Object.prototype.hasOwnProperty);
-var printWarning = function() {};
-
-if (true) {
-  printWarning = function(text) {
-    var message = 'Warning: ' + text;
-    if (typeof console !== 'undefined') {
-      console.error(message);
-    }
-    try {
-      // --- Welcome to debugging React ---
-      // This error was thrown as a convenience so that you can use this stack
-      // to find the callsite that caused this warning to fire.
-      throw new Error(message);
-    } catch (x) {}
-  };
-}
-
-function emptyFunctionThatReturnsNull() {
-  return null;
-}
-
-module.exports = function(isValidElement, throwOnDirectAccess) {
-  /* global Symbol */
-  var ITERATOR_SYMBOL = typeof Symbol === 'function' && Symbol.iterator;
-  var FAUX_ITERATOR_SYMBOL = '@@iterator'; // Before Symbol spec.
-
-  /**
-   * Returns the iterator method function contained on the iterable object.
-   *
-   * Be sure to invoke the function with the iterable as context:
-   *
-   *     var iteratorFn = getIteratorFn(myIterable);
-   *     if (iteratorFn) {
-   *       var iterator = iteratorFn.call(myIterable);
-   *       ...
-   *     }
-   *
-   * @param {?object} maybeIterable
-   * @return {?function}
-   */
-  function getIteratorFn(maybeIterable) {
-    var iteratorFn = maybeIterable && (ITERATOR_SYMBOL && maybeIterable[ITERATOR_SYMBOL] || maybeIterable[FAUX_ITERATOR_SYMBOL]);
-    if (typeof iteratorFn === 'function') {
-      return iteratorFn;
-    }
-  }
-
-  /**
-   * Collection of methods that allow declaration and validation of props that are
-   * supplied to React components. Example usage:
-   *
-   *   var Props = require('ReactPropTypes');
-   *   var MyArticle = React.createClass({
-   *     propTypes: {
-   *       // An optional string prop named "description".
-   *       description: Props.string,
-   *
-   *       // A required enum prop named "category".
-   *       category: Props.oneOf(['News','Photos']).isRequired,
-   *
-   *       // A prop named "dialog" that requires an instance of Dialog.
-   *       dialog: Props.instanceOf(Dialog).isRequired
-   *     },
-   *     render: function() { ... }
-   *   });
-   *
-   * A more formal specification of how these methods are used:
-   *
-   *   type := array|bool|func|object|number|string|oneOf([...])|instanceOf(...)
-   *   decl := ReactPropTypes.{type}(.isRequired)?
-   *
-   * Each and every declaration produces a function with the same signature. This
-   * allows the creation of custom validation functions. For example:
-   *
-   *  var MyLink = React.createClass({
-   *    propTypes: {
-   *      // An optional string or URI prop named "href".
-   *      href: function(props, propName, componentName) {
-   *        var propValue = props[propName];
-   *        if (propValue != null && typeof propValue !== 'string' &&
-   *            !(propValue instanceof URI)) {
-   *          return new Error(
-   *            'Expected a string or an URI for ' + propName + ' in ' +
-   *            componentName
-   *          );
-   *        }
-   *      }
-   *    },
-   *    render: function() {...}
-   *  });
-   *
-   * @internal
-   */
-
-  var ANONYMOUS = '<<anonymous>>';
-
-  // Important!
-  // Keep this list in sync with production version in `./factoryWithThrowingShims.js`.
-  var ReactPropTypes = {
-    array: createPrimitiveTypeChecker('array'),
-    bool: createPrimitiveTypeChecker('boolean'),
-    func: createPrimitiveTypeChecker('function'),
-    number: createPrimitiveTypeChecker('number'),
-    object: createPrimitiveTypeChecker('object'),
-    string: createPrimitiveTypeChecker('string'),
-    symbol: createPrimitiveTypeChecker('symbol'),
-
-    any: createAnyTypeChecker(),
-    arrayOf: createArrayOfTypeChecker,
-    element: createElementTypeChecker(),
-    elementType: createElementTypeTypeChecker(),
-    instanceOf: createInstanceTypeChecker,
-    node: createNodeChecker(),
-    objectOf: createObjectOfTypeChecker,
-    oneOf: createEnumTypeChecker,
-    oneOfType: createUnionTypeChecker,
-    shape: createShapeTypeChecker,
-    exact: createStrictShapeTypeChecker,
-  };
-
-  /**
-   * inlined Object.is polyfill to avoid requiring consumers ship their own
-   * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is
-   */
-  /*eslint-disable no-self-compare*/
-  function is(x, y) {
-    // SameValue algorithm
-    if (x === y) {
-      // Steps 1-5, 7-10
-      // Steps 6.b-6.e: +0 != -0
-      return x !== 0 || 1 / x === 1 / y;
-    } else {
-      // Step 6.a: NaN == NaN
-      return x !== x && y !== y;
-    }
-  }
-  /*eslint-enable no-self-compare*/
-
-  /**
-   * We use an Error-like object for backward compatibility as people may call
-   * PropTypes directly and inspect their output. However, we don't use real
-   * Errors anymore. We don't inspect their stack anyway, and creating them
-   * is prohibitively expensive if they are created too often, such as what
-   * happens in oneOfType() for any type before the one that matched.
-   */
-  function PropTypeError(message) {
-    this.message = message;
-    this.stack = '';
-  }
-  // Make `instanceof Error` still work for returned errors.
-  PropTypeError.prototype = Error.prototype;
-
-  function createChainableTypeChecker(validate) {
-    if (true) {
-      var manualPropTypeCallCache = {};
-      var manualPropTypeWarningCount = 0;
-    }
-    function checkType(isRequired, props, propName, componentName, location, propFullName, secret) {
-      componentName = componentName || ANONYMOUS;
-      propFullName = propFullName || propName;
-
-      if (secret !== ReactPropTypesSecret) {
-        if (throwOnDirectAccess) {
-          // New behavior only for users of `prop-types` package
-          var err = new Error(
-            'Calling PropTypes validators directly is not supported by the `prop-types` package. ' +
-            'Use `PropTypes.checkPropTypes()` to call them. ' +
-            'Read more at http://fb.me/use-check-prop-types'
-          );
-          err.name = 'Invariant Violation';
-          throw err;
-        } else if ( true && typeof console !== 'undefined') {
-          // Old behavior for people using React.PropTypes
-          var cacheKey = componentName + ':' + propName;
-          if (
-            !manualPropTypeCallCache[cacheKey] &&
-            // Avoid spamming the console because they are often not actionable except for lib authors
-            manualPropTypeWarningCount < 3
-          ) {
-            printWarning(
-              'You are manually calling a React.PropTypes validation ' +
-              'function for the `' + propFullName + '` prop on `' + componentName  + '`. This is deprecated ' +
-              'and will throw in the standalone `prop-types` package. ' +
-              'You may be seeing this warning due to a third-party PropTypes ' +
-              'library. See https://fb.me/react-warning-dont-call-proptypes ' + 'for details.'
-            );
-            manualPropTypeCallCache[cacheKey] = true;
-            manualPropTypeWarningCount++;
-          }
-        }
-      }
-      if (props[propName] == null) {
-        if (isRequired) {
-          if (props[propName] === null) {
-            return new PropTypeError('The ' + location + ' `' + propFullName + '` is marked as required ' + ('in `' + componentName + '`, but its value is `null`.'));
-          }
-          return new PropTypeError('The ' + location + ' `' + propFullName + '` is marked as required in ' + ('`' + componentName + '`, but its value is `undefined`.'));
-        }
-        return null;
-      } else {
-        return validate(props, propName, componentName, location, propFullName);
-      }
-    }
-
-    var chainedCheckType = checkType.bind(null, false);
-    chainedCheckType.isRequired = checkType.bind(null, true);
-
-    return chainedCheckType;
-  }
-
-  function createPrimitiveTypeChecker(expectedType) {
-    function validate(props, propName, componentName, location, propFullName, secret) {
-      var propValue = props[propName];
-      var propType = getPropType(propValue);
-      if (propType !== expectedType) {
-        // `propValue` being instance of, say, date/regexp, pass the 'object'
-        // check, but we can offer a more precise error message here rather than
-        // 'of type `object`'.
-        var preciseType = getPreciseType(propValue);
-
-        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + preciseType + '` supplied to `' + componentName + '`, expected ') + ('`' + expectedType + '`.'));
-      }
-      return null;
-    }
-    return createChainableTypeChecker(validate);
-  }
-
-  function createAnyTypeChecker() {
-    return createChainableTypeChecker(emptyFunctionThatReturnsNull);
-  }
-
-  function createArrayOfTypeChecker(typeChecker) {
-    function validate(props, propName, componentName, location, propFullName) {
-      if (typeof typeChecker !== 'function') {
-        return new PropTypeError('Property `' + propFullName + '` of component `' + componentName + '` has invalid PropType notation inside arrayOf.');
-      }
-      var propValue = props[propName];
-      if (!Array.isArray(propValue)) {
-        var propType = getPropType(propValue);
-        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected an array.'));
-      }
-      for (var i = 0; i < propValue.length; i++) {
-        var error = typeChecker(propValue, i, componentName, location, propFullName + '[' + i + ']', ReactPropTypesSecret);
-        if (error instanceof Error) {
-          return error;
-        }
-      }
-      return null;
-    }
-    return createChainableTypeChecker(validate);
-  }
-
-  function createElementTypeChecker() {
-    function validate(props, propName, componentName, location, propFullName) {
-      var propValue = props[propName];
-      if (!isValidElement(propValue)) {
-        var propType = getPropType(propValue);
-        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected a single ReactElement.'));
-      }
-      return null;
-    }
-    return createChainableTypeChecker(validate);
-  }
-
-  function createElementTypeTypeChecker() {
-    function validate(props, propName, componentName, location, propFullName) {
-      var propValue = props[propName];
-      if (!ReactIs.isValidElementType(propValue)) {
-        var propType = getPropType(propValue);
-        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected a single ReactElement type.'));
-      }
-      return null;
-    }
-    return createChainableTypeChecker(validate);
-  }
-
-  function createInstanceTypeChecker(expectedClass) {
-    function validate(props, propName, componentName, location, propFullName) {
-      if (!(props[propName] instanceof expectedClass)) {
-        var expectedClassName = expectedClass.name || ANONYMOUS;
-        var actualClassName = getClassName(props[propName]);
-        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + actualClassName + '` supplied to `' + componentName + '`, expected ') + ('instance of `' + expectedClassName + '`.'));
-      }
-      return null;
-    }
-    return createChainableTypeChecker(validate);
-  }
-
-  function createEnumTypeChecker(expectedValues) {
-    if (!Array.isArray(expectedValues)) {
-      if (true) {
-        if (arguments.length > 1) {
-          printWarning(
-            'Invalid arguments supplied to oneOf, expected an array, got ' + arguments.length + ' arguments. ' +
-            'A common mistake is to write oneOf(x, y, z) instead of oneOf([x, y, z]).'
-          );
-        } else {
-          printWarning('Invalid argument supplied to oneOf, expected an array.');
-        }
-      }
-      return emptyFunctionThatReturnsNull;
-    }
-
-    function validate(props, propName, componentName, location, propFullName) {
-      var propValue = props[propName];
-      for (var i = 0; i < expectedValues.length; i++) {
-        if (is(propValue, expectedValues[i])) {
-          return null;
-        }
-      }
-
-      var valuesString = JSON.stringify(expectedValues, function replacer(key, value) {
-        var type = getPreciseType(value);
-        if (type === 'symbol') {
-          return String(value);
-        }
-        return value;
-      });
-      return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of value `' + String(propValue) + '` ' + ('supplied to `' + componentName + '`, expected one of ' + valuesString + '.'));
-    }
-    return createChainableTypeChecker(validate);
-  }
-
-  function createObjectOfTypeChecker(typeChecker) {
-    function validate(props, propName, componentName, location, propFullName) {
-      if (typeof typeChecker !== 'function') {
-        return new PropTypeError('Property `' + propFullName + '` of component `' + componentName + '` has invalid PropType notation inside objectOf.');
-      }
-      var propValue = props[propName];
-      var propType = getPropType(propValue);
-      if (propType !== 'object') {
-        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected an object.'));
-      }
-      for (var key in propValue) {
-        if (has(propValue, key)) {
-          var error = typeChecker(propValue, key, componentName, location, propFullName + '.' + key, ReactPropTypesSecret);
-          if (error instanceof Error) {
-            return error;
-          }
-        }
-      }
-      return null;
-    }
-    return createChainableTypeChecker(validate);
-  }
-
-  function createUnionTypeChecker(arrayOfTypeCheckers) {
-    if (!Array.isArray(arrayOfTypeCheckers)) {
-       true ? printWarning('Invalid argument supplied to oneOfType, expected an instance of array.') : undefined;
-      return emptyFunctionThatReturnsNull;
-    }
-
-    for (var i = 0; i < arrayOfTypeCheckers.length; i++) {
-      var checker = arrayOfTypeCheckers[i];
-      if (typeof checker !== 'function') {
-        printWarning(
-          'Invalid argument supplied to oneOfType. Expected an array of check functions, but ' +
-          'received ' + getPostfixForTypeWarning(checker) + ' at index ' + i + '.'
-        );
-        return emptyFunctionThatReturnsNull;
-      }
-    }
-
-    function validate(props, propName, componentName, location, propFullName) {
-      for (var i = 0; i < arrayOfTypeCheckers.length; i++) {
-        var checker = arrayOfTypeCheckers[i];
-        if (checker(props, propName, componentName, location, propFullName, ReactPropTypesSecret) == null) {
-          return null;
-        }
-      }
-
-      return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` supplied to ' + ('`' + componentName + '`.'));
-    }
-    return createChainableTypeChecker(validate);
-  }
-
-  function createNodeChecker() {
-    function validate(props, propName, componentName, location, propFullName) {
-      if (!isNode(props[propName])) {
-        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` supplied to ' + ('`' + componentName + '`, expected a ReactNode.'));
-      }
-      return null;
-    }
-    return createChainableTypeChecker(validate);
-  }
-
-  function createShapeTypeChecker(shapeTypes) {
-    function validate(props, propName, componentName, location, propFullName) {
-      var propValue = props[propName];
-      var propType = getPropType(propValue);
-      if (propType !== 'object') {
-        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type `' + propType + '` ' + ('supplied to `' + componentName + '`, expected `object`.'));
-      }
-      for (var key in shapeTypes) {
-        var checker = shapeTypes[key];
-        if (!checker) {
-          continue;
-        }
-        var error = checker(propValue, key, componentName, location, propFullName + '.' + key, ReactPropTypesSecret);
-        if (error) {
-          return error;
-        }
-      }
-      return null;
-    }
-    return createChainableTypeChecker(validate);
-  }
-
-  function createStrictShapeTypeChecker(shapeTypes) {
-    function validate(props, propName, componentName, location, propFullName) {
-      var propValue = props[propName];
-      var propType = getPropType(propValue);
-      if (propType !== 'object') {
-        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type `' + propType + '` ' + ('supplied to `' + componentName + '`, expected `object`.'));
-      }
-      // We need to check all keys in case some are required but missing from
-      // props.
-      var allKeys = assign({}, props[propName], shapeTypes);
-      for (var key in allKeys) {
-        var checker = shapeTypes[key];
-        if (!checker) {
-          return new PropTypeError(
-            'Invalid ' + location + ' `' + propFullName + '` key `' + key + '` supplied to `' + componentName + '`.' +
-            '\nBad object: ' + JSON.stringify(props[propName], null, '  ') +
-            '\nValid keys: ' +  JSON.stringify(Object.keys(shapeTypes), null, '  ')
-          );
-        }
-        var error = checker(propValue, key, componentName, location, propFullName + '.' + key, ReactPropTypesSecret);
-        if (error) {
-          return error;
-        }
-      }
-      return null;
-    }
-
-    return createChainableTypeChecker(validate);
-  }
-
-  function isNode(propValue) {
-    switch (typeof propValue) {
-      case 'number':
-      case 'string':
-      case 'undefined':
-        return true;
-      case 'boolean':
-        return !propValue;
-      case 'object':
-        if (Array.isArray(propValue)) {
-          return propValue.every(isNode);
-        }
-        if (propValue === null || isValidElement(propValue)) {
-          return true;
-        }
-
-        var iteratorFn = getIteratorFn(propValue);
-        if (iteratorFn) {
-          var iterator = iteratorFn.call(propValue);
-          var step;
-          if (iteratorFn !== propValue.entries) {
-            while (!(step = iterator.next()).done) {
-              if (!isNode(step.value)) {
-                return false;
-              }
-            }
-          } else {
-            // Iterator will provide entry [k,v] tuples rather than values.
-            while (!(step = iterator.next()).done) {
-              var entry = step.value;
-              if (entry) {
-                if (!isNode(entry[1])) {
-                  return false;
-                }
-              }
-            }
-          }
-        } else {
-          return false;
-        }
-
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  function isSymbol(propType, propValue) {
-    // Native Symbol.
-    if (propType === 'symbol') {
-      return true;
-    }
-
-    // falsy value can't be a Symbol
-    if (!propValue) {
-      return false;
-    }
-
-    // 19.4.3.5 Symbol.prototype[@@toStringTag] === 'Symbol'
-    if (propValue['@@toStringTag'] === 'Symbol') {
-      return true;
-    }
-
-    // Fallback for non-spec compliant Symbols which are polyfilled.
-    if (typeof Symbol === 'function' && propValue instanceof Symbol) {
-      return true;
-    }
-
-    return false;
-  }
-
-  // Equivalent of `typeof` but with special handling for array and regexp.
-  function getPropType(propValue) {
-    var propType = typeof propValue;
-    if (Array.isArray(propValue)) {
-      return 'array';
-    }
-    if (propValue instanceof RegExp) {
-      // Old webkits (at least until Android 4.0) return 'function' rather than
-      // 'object' for typeof a RegExp. We'll normalize this here so that /bla/
-      // passes PropTypes.object.
-      return 'object';
-    }
-    if (isSymbol(propType, propValue)) {
-      return 'symbol';
-    }
-    return propType;
-  }
-
-  // This handles more types than `getPropType`. Only used for error messages.
-  // See `createPrimitiveTypeChecker`.
-  function getPreciseType(propValue) {
-    if (typeof propValue === 'undefined' || propValue === null) {
-      return '' + propValue;
-    }
-    var propType = getPropType(propValue);
-    if (propType === 'object') {
-      if (propValue instanceof Date) {
-        return 'date';
-      } else if (propValue instanceof RegExp) {
-        return 'regexp';
-      }
-    }
-    return propType;
-  }
-
-  // Returns a string that is postfixed to a warning about an invalid type.
-  // For example, "undefined" or "of type array"
-  function getPostfixForTypeWarning(value) {
-    var type = getPreciseType(value);
-    switch (type) {
-      case 'array':
-      case 'object':
-        return 'an ' + type;
-      case 'boolean':
-      case 'date':
-      case 'regexp':
-        return 'a ' + type;
-      default:
-        return type;
-    }
-  }
-
-  // Returns class name of the object, if any.
-  function getClassName(propValue) {
-    if (!propValue.constructor || !propValue.constructor.name) {
-      return ANONYMOUS;
-    }
-    return propValue.constructor.name;
-  }
-
-  ReactPropTypes.checkPropTypes = checkPropTypes;
-  ReactPropTypes.resetWarningCache = checkPropTypes.resetWarningCache;
-  ReactPropTypes.PropTypes = ReactPropTypes;
-
-  return ReactPropTypes;
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/react-apollo/node_modules/prop-types/index.js":
-/*!********************************************************************!*\
-  !*** ./node_modules/react-apollo/node_modules/prop-types/index.js ***!
-  \********************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-/**
- * Copyright (c) 2013-present, Facebook, Inc.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
-if (true) {
-  var ReactIs = __webpack_require__(/*! react-is */ "./node_modules/react-apollo/node_modules/react-is/index.js");
-
-  // By explicitly using `prop-types` you are opting into new development behavior.
-  // http://fb.me/prop-types-in-prod
-  var throwOnDirectAccess = true;
-  module.exports = __webpack_require__(/*! ./factoryWithTypeCheckers */ "./node_modules/react-apollo/node_modules/prop-types/factoryWithTypeCheckers.js")(ReactIs.isElement, throwOnDirectAccess);
-} else {}
-
-
-/***/ }),
-
-/***/ "./node_modules/react-apollo/node_modules/prop-types/lib/ReactPropTypesSecret.js":
-/*!***************************************************************************************!*\
-  !*** ./node_modules/react-apollo/node_modules/prop-types/lib/ReactPropTypesSecret.js ***!
-  \***************************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/**
- * Copyright (c) 2013-present, Facebook, Inc.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
-
-
-var ReactPropTypesSecret = 'SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED';
-
-module.exports = ReactPropTypesSecret;
-
-
-/***/ }),
-
-/***/ "./node_modules/react-apollo/node_modules/react-is/cjs/react-is.development.js":
-/*!*************************************************************************************!*\
-  !*** ./node_modules/react-apollo/node_modules/react-is/cjs/react-is.development.js ***!
-  \*************************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/** @license React v16.8.6
- * react-is.development.js
- *
- * Copyright (c) Facebook, Inc. and its affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
-
-
-
-
-if (true) {
-  (function() {
-'use strict';
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
-// The Symbol used to tag the ReactElement-like types. If there is no native Symbol
-// nor polyfill, then a plain number is used for performance.
-var hasSymbol = typeof Symbol === 'function' && Symbol.for;
-
-var REACT_ELEMENT_TYPE = hasSymbol ? Symbol.for('react.element') : 0xeac7;
-var REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca;
-var REACT_FRAGMENT_TYPE = hasSymbol ? Symbol.for('react.fragment') : 0xeacb;
-var REACT_STRICT_MODE_TYPE = hasSymbol ? Symbol.for('react.strict_mode') : 0xeacc;
-var REACT_PROFILER_TYPE = hasSymbol ? Symbol.for('react.profiler') : 0xead2;
-var REACT_PROVIDER_TYPE = hasSymbol ? Symbol.for('react.provider') : 0xeacd;
-var REACT_CONTEXT_TYPE = hasSymbol ? Symbol.for('react.context') : 0xeace;
-var REACT_ASYNC_MODE_TYPE = hasSymbol ? Symbol.for('react.async_mode') : 0xeacf;
-var REACT_CONCURRENT_MODE_TYPE = hasSymbol ? Symbol.for('react.concurrent_mode') : 0xeacf;
-var REACT_FORWARD_REF_TYPE = hasSymbol ? Symbol.for('react.forward_ref') : 0xead0;
-var REACT_SUSPENSE_TYPE = hasSymbol ? Symbol.for('react.suspense') : 0xead1;
-var REACT_MEMO_TYPE = hasSymbol ? Symbol.for('react.memo') : 0xead3;
-var REACT_LAZY_TYPE = hasSymbol ? Symbol.for('react.lazy') : 0xead4;
-
-function isValidElementType(type) {
-  return typeof type === 'string' || typeof type === 'function' ||
-  // Note: its typeof might be other than 'symbol' or 'number' if it's a polyfill.
-  type === REACT_FRAGMENT_TYPE || type === REACT_CONCURRENT_MODE_TYPE || type === REACT_PROFILER_TYPE || type === REACT_STRICT_MODE_TYPE || type === REACT_SUSPENSE_TYPE || typeof type === 'object' && type !== null && (type.$$typeof === REACT_LAZY_TYPE || type.$$typeof === REACT_MEMO_TYPE || type.$$typeof === REACT_PROVIDER_TYPE || type.$$typeof === REACT_CONTEXT_TYPE || type.$$typeof === REACT_FORWARD_REF_TYPE);
-}
-
-/**
- * Forked from fbjs/warning:
- * https://github.com/facebook/fbjs/blob/e66ba20ad5be433eb54423f2b097d829324d9de6/packages/fbjs/src/__forks__/warning.js
- *
- * Only change is we use console.warn instead of console.error,
- * and do nothing when 'console' is not supported.
- * This really simplifies the code.
- * ---
- * Similar to invariant but only logs a warning if the condition is not met.
- * This can be used to log issues in development environments in critical
- * paths. Removing the logging code for production environments will keep the
- * same logic and follow the same code paths.
- */
-
-var lowPriorityWarning = function () {};
-
-{
-  var printWarning = function (format) {
-    for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-      args[_key - 1] = arguments[_key];
-    }
-
-    var argIndex = 0;
-    var message = 'Warning: ' + format.replace(/%s/g, function () {
-      return args[argIndex++];
-    });
-    if (typeof console !== 'undefined') {
-      console.warn(message);
-    }
-    try {
-      // --- Welcome to debugging React ---
-      // This error was thrown as a convenience so that you can use this stack
-      // to find the callsite that caused this warning to fire.
-      throw new Error(message);
-    } catch (x) {}
-  };
-
-  lowPriorityWarning = function (condition, format) {
-    if (format === undefined) {
-      throw new Error('`lowPriorityWarning(condition, format, ...args)` requires a warning ' + 'message argument');
-    }
-    if (!condition) {
-      for (var _len2 = arguments.length, args = Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
-        args[_key2 - 2] = arguments[_key2];
-      }
-
-      printWarning.apply(undefined, [format].concat(args));
-    }
-  };
-}
-
-var lowPriorityWarning$1 = lowPriorityWarning;
-
-function typeOf(object) {
-  if (typeof object === 'object' && object !== null) {
-    var $$typeof = object.$$typeof;
-    switch ($$typeof) {
-      case REACT_ELEMENT_TYPE:
-        var type = object.type;
-
-        switch (type) {
-          case REACT_ASYNC_MODE_TYPE:
-          case REACT_CONCURRENT_MODE_TYPE:
-          case REACT_FRAGMENT_TYPE:
-          case REACT_PROFILER_TYPE:
-          case REACT_STRICT_MODE_TYPE:
-          case REACT_SUSPENSE_TYPE:
-            return type;
-          default:
-            var $$typeofType = type && type.$$typeof;
-
-            switch ($$typeofType) {
-              case REACT_CONTEXT_TYPE:
-              case REACT_FORWARD_REF_TYPE:
-              case REACT_PROVIDER_TYPE:
-                return $$typeofType;
-              default:
-                return $$typeof;
-            }
-        }
-      case REACT_LAZY_TYPE:
-      case REACT_MEMO_TYPE:
-      case REACT_PORTAL_TYPE:
-        return $$typeof;
-    }
-  }
-
-  return undefined;
-}
-
-// AsyncMode is deprecated along with isAsyncMode
-var AsyncMode = REACT_ASYNC_MODE_TYPE;
-var ConcurrentMode = REACT_CONCURRENT_MODE_TYPE;
-var ContextConsumer = REACT_CONTEXT_TYPE;
-var ContextProvider = REACT_PROVIDER_TYPE;
-var Element = REACT_ELEMENT_TYPE;
-var ForwardRef = REACT_FORWARD_REF_TYPE;
-var Fragment = REACT_FRAGMENT_TYPE;
-var Lazy = REACT_LAZY_TYPE;
-var Memo = REACT_MEMO_TYPE;
-var Portal = REACT_PORTAL_TYPE;
-var Profiler = REACT_PROFILER_TYPE;
-var StrictMode = REACT_STRICT_MODE_TYPE;
-var Suspense = REACT_SUSPENSE_TYPE;
-
-var hasWarnedAboutDeprecatedIsAsyncMode = false;
-
-// AsyncMode should be deprecated
-function isAsyncMode(object) {
-  {
-    if (!hasWarnedAboutDeprecatedIsAsyncMode) {
-      hasWarnedAboutDeprecatedIsAsyncMode = true;
-      lowPriorityWarning$1(false, 'The ReactIs.isAsyncMode() alias has been deprecated, ' + 'and will be removed in React 17+. Update your code to use ' + 'ReactIs.isConcurrentMode() instead. It has the exact same API.');
-    }
-  }
-  return isConcurrentMode(object) || typeOf(object) === REACT_ASYNC_MODE_TYPE;
-}
-function isConcurrentMode(object) {
-  return typeOf(object) === REACT_CONCURRENT_MODE_TYPE;
-}
-function isContextConsumer(object) {
-  return typeOf(object) === REACT_CONTEXT_TYPE;
-}
-function isContextProvider(object) {
-  return typeOf(object) === REACT_PROVIDER_TYPE;
-}
-function isElement(object) {
-  return typeof object === 'object' && object !== null && object.$$typeof === REACT_ELEMENT_TYPE;
-}
-function isForwardRef(object) {
-  return typeOf(object) === REACT_FORWARD_REF_TYPE;
-}
-function isFragment(object) {
-  return typeOf(object) === REACT_FRAGMENT_TYPE;
-}
-function isLazy(object) {
-  return typeOf(object) === REACT_LAZY_TYPE;
-}
-function isMemo(object) {
-  return typeOf(object) === REACT_MEMO_TYPE;
-}
-function isPortal(object) {
-  return typeOf(object) === REACT_PORTAL_TYPE;
-}
-function isProfiler(object) {
-  return typeOf(object) === REACT_PROFILER_TYPE;
-}
-function isStrictMode(object) {
-  return typeOf(object) === REACT_STRICT_MODE_TYPE;
-}
-function isSuspense(object) {
-  return typeOf(object) === REACT_SUSPENSE_TYPE;
-}
-
-exports.typeOf = typeOf;
-exports.AsyncMode = AsyncMode;
-exports.ConcurrentMode = ConcurrentMode;
-exports.ContextConsumer = ContextConsumer;
-exports.ContextProvider = ContextProvider;
-exports.Element = Element;
-exports.ForwardRef = ForwardRef;
-exports.Fragment = Fragment;
-exports.Lazy = Lazy;
-exports.Memo = Memo;
-exports.Portal = Portal;
-exports.Profiler = Profiler;
-exports.StrictMode = StrictMode;
-exports.Suspense = Suspense;
-exports.isValidElementType = isValidElementType;
-exports.isAsyncMode = isAsyncMode;
-exports.isConcurrentMode = isConcurrentMode;
-exports.isContextConsumer = isContextConsumer;
-exports.isContextProvider = isContextProvider;
-exports.isElement = isElement;
-exports.isForwardRef = isForwardRef;
-exports.isFragment = isFragment;
-exports.isLazy = isLazy;
-exports.isMemo = isMemo;
-exports.isPortal = isPortal;
-exports.isProfiler = isProfiler;
-exports.isStrictMode = isStrictMode;
-exports.isSuspense = isSuspense;
-  })();
-}
-
-
-/***/ }),
-
-/***/ "./node_modules/react-apollo/node_modules/react-is/index.js":
-/*!******************************************************************!*\
-  !*** ./node_modules/react-apollo/node_modules/react-is/index.js ***!
-  \******************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-if (false) {} else {
-  module.exports = __webpack_require__(/*! ./cjs/react-is.development.js */ "./node_modules/react-apollo/node_modules/react-is/cjs/react-is.development.js");
-}
-
-
-/***/ }),
-
-/***/ "./node_modules/react-apollo/node_modules/ts-invariant/lib/invariant.esm.js":
-/*!**********************************************************************************!*\
-  !*** ./node_modules/react-apollo/node_modules/ts-invariant/lib/invariant.esm.js ***!
-  \**********************************************************************************/
-/*! exports provided: default, InvariantError, invariant, process */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "InvariantError", function() { return InvariantError; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "invariant", function() { return invariant; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "process", function() { return processStub; });
-/* harmony import */ var tslib__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.js");
-
-
-var genericMessage = "Invariant Violation";
-var _a = Object.setPrototypeOf, setPrototypeOf = _a === void 0 ? function (obj, proto) {
-    obj.__proto__ = proto;
-    return obj;
-} : _a;
-var InvariantError = /** @class */ (function (_super) {
-    Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__extends"])(InvariantError, _super);
-    function InvariantError(message) {
-        if (message === void 0) { message = genericMessage; }
-        var _this = _super.call(this, typeof message === "number"
-            ? genericMessage + ": " + message + " (see https://github.com/apollographql/invariant-packages)"
-            : message) || this;
-        _this.framesToPop = 1;
-        _this.name = genericMessage;
-        setPrototypeOf(_this, InvariantError.prototype);
-        return _this;
-    }
-    return InvariantError;
-}(Error));
-function invariant(condition, message) {
-    if (!condition) {
-        throw new InvariantError(message);
-    }
-}
-function wrapConsoleMethod(method) {
-    return function () {
-        return console[method].apply(console, arguments);
-    };
-}
-(function (invariant) {
-    invariant.warn = wrapConsoleMethod("warn");
-    invariant.error = wrapConsoleMethod("error");
-})(invariant || (invariant = {}));
-// Code that uses ts-invariant with rollup-plugin-invariant may want to
-// import this process stub to avoid errors evaluating process.env.NODE_ENV.
-// However, because most ESM-to-CJS compilers will rewrite the process import
-// as tsInvariant.process, which prevents proper replacement by minifiers, we
-// also attempt to define the stub globally when it is not already defined.
-var processStub = { env: {} };
-if (typeof process === "object") {
-    processStub = process;
-}
-else
-    try {
-        // Using Function to evaluate this assignment in global scope also escapes
-        // the strict mode of the current module, thereby allowing the assignment.
-        // Inspired by https://github.com/facebook/regenerator/pull/369.
-        Function("stub", "process = stub")(processStub);
-    }
-    catch (atLeastWeTried) {
-        // The assignment can fail if a Content Security Policy heavy-handedly
-        // forbids Function usage. In those environments, developers should take
-        // extra care to replace process.env.NODE_ENV in their production builds,
-        // or define an appropriate global.process polyfill.
-    }
-var invariant$1 = invariant;
-
-/* harmony default export */ __webpack_exports__["default"] = (invariant$1);
-
-
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../../../process/browser.js */ "./node_modules/process/browser.js")))
-
-/***/ }),
-
 /***/ "./node_modules/react-apollo/react-apollo.esm.js":
 /*!*******************************************************!*\
   !*** ./node_modules/react-apollo/react-apollo.esm.js ***!
@@ -22618,14 +21740,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "withSubscription", function() { return withSubscription; });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var prop_types__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! prop-types */ "./node_modules/react-apollo/node_modules/prop-types/index.js");
+/* harmony import */ var prop_types__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! prop-types */ "./node_modules/prop-types/index.js");
 /* harmony import */ var prop_types__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(prop_types__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var ts_invariant__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ts-invariant */ "./node_modules/react-apollo/node_modules/ts-invariant/lib/invariant.esm.js");
+/* harmony import */ var ts_invariant__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ts-invariant */ "./node_modules/ts-invariant/lib/invariant.esm.js");
 /* harmony import */ var tslib__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.js");
 /* harmony import */ var apollo_client__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! apollo-client */ "./node_modules/apollo-client/bundle.esm.js");
 /* harmony import */ var lodash_isequal__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! lodash.isequal */ "./node_modules/lodash.isequal/index.js");
 /* harmony import */ var lodash_isequal__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(lodash_isequal__WEBPACK_IMPORTED_MODULE_5__);
-/* harmony import */ var hoist_non_react_statics__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! hoist-non-react-statics */ "./node_modules/react-apollo/node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js");
+/* harmony import */ var hoist_non_react_statics__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! hoist-non-react-statics */ "./node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js");
 /* harmony import */ var hoist_non_react_statics__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(hoist_non_react_statics__WEBPACK_IMPORTED_MODULE_6__);
 
 
@@ -23037,6 +22159,7 @@ var Query = (function (_super) {
         variables: prop_types__WEBPACK_IMPORTED_MODULE_1__["object"],
         ssr: prop_types__WEBPACK_IMPORTED_MODULE_1__["bool"],
         partialRefetch: prop_types__WEBPACK_IMPORTED_MODULE_1__["bool"],
+        returnPartialData: prop_types__WEBPACK_IMPORTED_MODULE_1__["bool"],
     };
     return Query;
 }(react__WEBPACK_IMPORTED_MODULE_0__["Component"]));
@@ -27435,7 +26558,7 @@ if (false) {} else {
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-/** @license React v16.6.1
+/** @license React v16.8.6
  * react-is.development.js
  *
  * Copyright (c) Facebook, Inc. and its affiliates.
@@ -27534,7 +26657,6 @@ var lowPriorityWarning$1 = lowPriorityWarning;
 function typeOf(object) {
   if (typeof object === 'object' && object !== null) {
     var $$typeof = object.$$typeof;
-
     switch ($$typeof) {
       case REACT_ELEMENT_TYPE:
         var type = object.type;
@@ -27545,6 +26667,7 @@ function typeOf(object) {
           case REACT_FRAGMENT_TYPE:
           case REACT_PROFILER_TYPE:
           case REACT_STRICT_MODE_TYPE:
+          case REACT_SUSPENSE_TYPE:
             return type;
           default:
             var $$typeofType = type && type.$$typeof;
@@ -27558,6 +26681,8 @@ function typeOf(object) {
                 return $$typeof;
             }
         }
+      case REACT_LAZY_TYPE:
+      case REACT_MEMO_TYPE:
       case REACT_PORTAL_TYPE:
         return $$typeof;
     }
@@ -27574,9 +26699,12 @@ var ContextProvider = REACT_PROVIDER_TYPE;
 var Element = REACT_ELEMENT_TYPE;
 var ForwardRef = REACT_FORWARD_REF_TYPE;
 var Fragment = REACT_FRAGMENT_TYPE;
-var Profiler = REACT_PROFILER_TYPE;
+var Lazy = REACT_LAZY_TYPE;
+var Memo = REACT_MEMO_TYPE;
 var Portal = REACT_PORTAL_TYPE;
+var Profiler = REACT_PROFILER_TYPE;
 var StrictMode = REACT_STRICT_MODE_TYPE;
+var Suspense = REACT_SUSPENSE_TYPE;
 
 var hasWarnedAboutDeprecatedIsAsyncMode = false;
 
@@ -27608,14 +26736,23 @@ function isForwardRef(object) {
 function isFragment(object) {
   return typeOf(object) === REACT_FRAGMENT_TYPE;
 }
-function isProfiler(object) {
-  return typeOf(object) === REACT_PROFILER_TYPE;
+function isLazy(object) {
+  return typeOf(object) === REACT_LAZY_TYPE;
+}
+function isMemo(object) {
+  return typeOf(object) === REACT_MEMO_TYPE;
 }
 function isPortal(object) {
   return typeOf(object) === REACT_PORTAL_TYPE;
 }
+function isProfiler(object) {
+  return typeOf(object) === REACT_PROFILER_TYPE;
+}
 function isStrictMode(object) {
   return typeOf(object) === REACT_STRICT_MODE_TYPE;
+}
+function isSuspense(object) {
+  return typeOf(object) === REACT_SUSPENSE_TYPE;
 }
 
 exports.typeOf = typeOf;
@@ -27626,9 +26763,12 @@ exports.ContextProvider = ContextProvider;
 exports.Element = Element;
 exports.ForwardRef = ForwardRef;
 exports.Fragment = Fragment;
-exports.Profiler = Profiler;
+exports.Lazy = Lazy;
+exports.Memo = Memo;
 exports.Portal = Portal;
+exports.Profiler = Profiler;
 exports.StrictMode = StrictMode;
+exports.Suspense = Suspense;
 exports.isValidElementType = isValidElementType;
 exports.isAsyncMode = isAsyncMode;
 exports.isConcurrentMode = isConcurrentMode;
@@ -27637,9 +26777,12 @@ exports.isContextProvider = isContextProvider;
 exports.isElement = isElement;
 exports.isForwardRef = isForwardRef;
 exports.isFragment = isFragment;
-exports.isProfiler = isProfiler;
+exports.isLazy = isLazy;
+exports.isMemo = isMemo;
 exports.isPortal = isPortal;
+exports.isProfiler = isProfiler;
 exports.isStrictMode = isStrictMode;
+exports.isSuspense = isSuspense;
   })();
 }
 
@@ -27665,12 +26808,12 @@ if (false) {} else {
 
 /***/ "./node_modules/react/index.js":
 /*!*******************************************************************************************!*\
-  !*** delegated ./node_modules/react/index.js from dll-reference dll_1aef2d0bbc0d334d831c ***!
+  !*** delegated ./node_modules/react/index.js from dll-reference dll_829b10deddf10e1653a8 ***!
   \*******************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = (__webpack_require__(/*! dll-reference dll_1aef2d0bbc0d334d831c */ "dll-reference dll_1aef2d0bbc0d334d831c"))("./node_modules/react/index.js");
+module.exports = (__webpack_require__(/*! dll-reference dll_829b10deddf10e1653a8 */ "dll-reference dll_829b10deddf10e1653a8"))("./node_modules/react/index.js");
 
 /***/ }),
 
@@ -28521,13 +27664,14 @@ function symbolObservablePonyfill(root) {
 /*!********************************************************!*\
   !*** ./node_modules/ts-invariant/lib/invariant.esm.js ***!
   \********************************************************/
-/*! exports provided: default, InvariantError, invariant */
+/*! exports provided: default, InvariantError, invariant, process */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "InvariantError", function() { return InvariantError; });
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "InvariantError", function() { return InvariantError; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "invariant", function() { return invariant; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "process", function() { return processStub; });
 /* harmony import */ var tslib__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.js");
 
 
@@ -28540,7 +27684,9 @@ var InvariantError = /** @class */ (function (_super) {
     Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__extends"])(InvariantError, _super);
     function InvariantError(message) {
         if (message === void 0) { message = genericMessage; }
-        var _this = _super.call(this, message) || this;
+        var _this = _super.call(this, typeof message === "number"
+            ? genericMessage + ": " + message + " (see https://github.com/apollographql/invariant-packages)"
+            : message) || this;
         _this.framesToPop = 1;
         _this.name = genericMessage;
         setPrototypeOf(_this, InvariantError.prototype);
@@ -28553,29 +27699,44 @@ function invariant(condition, message) {
         throw new InvariantError(message);
     }
 }
+function wrapConsoleMethod(method) {
+    return function () {
+        return console[method].apply(console, arguments);
+    };
+}
 (function (invariant) {
-    function warn() {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        return console.warn.apply(console, args);
-    }
-    invariant.warn = warn;
-    function error() {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        return console.error.apply(console, args);
-    }
-    invariant.error = error;
+    invariant.warn = wrapConsoleMethod("warn");
+    invariant.error = wrapConsoleMethod("error");
 })(invariant || (invariant = {}));
+// Code that uses ts-invariant with rollup-plugin-invariant may want to
+// import this process stub to avoid errors evaluating process.env.NODE_ENV.
+// However, because most ESM-to-CJS compilers will rewrite the process import
+// as tsInvariant.process, which prevents proper replacement by minifiers, we
+// also attempt to define the stub globally when it is not already defined.
+var processStub = { env: {} };
+if (typeof process === "object") {
+    processStub = process;
+}
+else
+    try {
+        // Using Function to evaluate this assignment in global scope also escapes
+        // the strict mode of the current module, thereby allowing the assignment.
+        // Inspired by https://github.com/facebook/regenerator/pull/369.
+        Function("stub", "process = stub")(processStub);
+    }
+    catch (atLeastWeTried) {
+        // The assignment can fail if a Content Security Policy heavy-handedly
+        // forbids Function usage. In those environments, developers should take
+        // extra care to replace process.env.NODE_ENV in their production builds,
+        // or define an appropriate global.process polyfill.
+    }
 var invariant$1 = invariant;
 
 /* harmony default export */ __webpack_exports__["default"] = (invariant$1);
 
+//# sourceMappingURL=invariant.esm.js.map
 
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../process/browser.js */ "./node_modules/process/browser.js")))
 
 /***/ }),
 
@@ -28793,6 +27954,21 @@ function __importStar(mod) {
 function __importDefault(mod) {
     return (mod && mod.__esModule) ? mod : { default: mod };
 }
+
+
+/***/ }),
+
+/***/ "./node_modules/unfetch/dist/unfetch.mjs":
+/*!***********************************************!*\
+  !*** ./node_modules/unfetch/dist/unfetch.mjs ***!
+  \***********************************************/
+/*! exports provided: default */
+/***/ (function(__webpack_module__, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = (function(e,n){return n=n||{},new Promise(function(t,r){var s=new XMLHttpRequest,o=[],u=[],i={},a=function(){return{ok:2==(s.status/100|0),statusText:s.statusText,status:s.status,url:s.responseURL,text:function(){return Promise.resolve(s.responseText)},json:function(){return Promise.resolve(JSON.parse(s.responseText))},blob:function(){return Promise.resolve(new Blob([s.response]))},clone:a,headers:{keys:function(){return o},entries:function(){return u},get:function(e){return i[e.toLowerCase()]},has:function(e){return e.toLowerCase()in i}}}};for(var l in s.open(n.method||"get",e,!0),s.onload=function(){s.getAllResponseHeaders().replace(/^(.*?):[^\S\n]*([\s\S]*?)$/gm,function(e,n,t){o.push(n=n.toLowerCase()),u.push([n,t]),i[n]=i[n]?i[n]+","+t:t}),t(a())},s.onerror=r,s.withCredentials="include"==n.credentials,n.headers)s.setRequestHeader(l,n.headers[l]);s.send(n.body||null)})});
+//# sourceMappingURL=unfetch.mjs.map
 
 
 /***/ }),
@@ -29571,12 +28747,12 @@ module.exports = {
 
 /***/ "./node_modules/webpack/buildin/global.js":
 /*!******************************************************************************************************!*\
-  !*** delegated ./node_modules/webpack/buildin/global.js from dll-reference dll_1aef2d0bbc0d334d831c ***!
+  !*** delegated ./node_modules/webpack/buildin/global.js from dll-reference dll_829b10deddf10e1653a8 ***!
   \******************************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = (__webpack_require__(/*! dll-reference dll_1aef2d0bbc0d334d831c */ "dll-reference dll_1aef2d0bbc0d334d831c"))("./node_modules/webpack/buildin/global.js");
+module.exports = (__webpack_require__(/*! dll-reference dll_829b10deddf10e1653a8 */ "dll-reference dll_829b10deddf10e1653a8"))("./node_modules/webpack/buildin/global.js");
 
 /***/ }),
 
@@ -30320,8 +29496,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _babel_runtime_corejs2_helpers_esm_inherits__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/inherits */ "./node_modules/@babel/runtime-corejs2/helpers/esm/inherits.js");
 /* harmony import */ var next_app__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! next/app */ "./node_modules/next/app.js");
 /* harmony import */ var next_app__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(next_app__WEBPACK_IMPORTED_MODULE_5__);
-/* harmony import */ var next_server_head__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! next-server/head */ "./node_modules/next-server/head.js");
-/* harmony import */ var next_server_head__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(next_server_head__WEBPACK_IMPORTED_MODULE_6__);
+/* harmony import */ var next_head__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! next/head */ "./node_modules/next-server/dist/lib/head.js");
+/* harmony import */ var next_head__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(next_head__WEBPACK_IMPORTED_MODULE_6__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_7___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_7__);
 /* harmony import */ var _lib_with_apollo_client__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../lib/with-apollo-client */ "./lib/with-apollo-client.js");
@@ -30355,11 +29531,11 @@ function (_App) {
           Component = _this$props.Component,
           pageProps = _this$props.pageProps,
           apolloClient = _this$props.apolloClient;
-      return react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement(next_app__WEBPACK_IMPORTED_MODULE_5__["Container"], null, react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement(next_server_head__WEBPACK_IMPORTED_MODULE_6___default.a, null, react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement("meta", {
+      return react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement(next_app__WEBPACK_IMPORTED_MODULE_5__["Container"], null, react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement(next_head__WEBPACK_IMPORTED_MODULE_6___default.a, null, react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement("meta", {
         name: "viewport",
         content: "width=device-width, initial-scale=1.0"
       }), react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement("link", {
-        href: "https://fonts.googleapis.com/css?family=Lato:400,700,900",
+        href: "https://fonts.googleapis.com/css?family=Lato:300,400,700,900",
         rel: "stylesheet"
       })), react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement(react_apollo__WEBPACK_IMPORTED_MODULE_9__["ApolloProvider"], {
         client: apolloClient
@@ -30374,16 +29550,16 @@ function (_App) {
 
 /***/ }),
 
-/***/ "dll-reference dll_1aef2d0bbc0d334d831c":
+/***/ "dll-reference dll_829b10deddf10e1653a8":
 /*!*******************************************!*\
-  !*** external "dll_1aef2d0bbc0d334d831c" ***!
+  !*** external "dll_829b10deddf10e1653a8" ***!
   \*******************************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-module.exports = dll_1aef2d0bbc0d334d831c;
+module.exports = dll_829b10deddf10e1653a8;
 
 /***/ })
 
-},[["./node_modules/next/dist/build/webpack/loaders/next-client-pages-loader.js?page=%2F_app&absolutePagePath=private-next-pages%2F_app.js!./","static/runtime/webpack.js"]]]));;
+},[["./node_modules/next/dist/build/webpack/loaders/next-client-pages-loader.js?page=%2F_app&absolutePagePath=private-next-pages%2F_app.js!./","static/runtime/webpack.js"]]]);
 //# sourceMappingURL=_app.js.map

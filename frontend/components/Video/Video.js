@@ -1,16 +1,13 @@
 import React from "react"
 import Menu from './../Menu/Menu'
-import YouTube from 'react-youtube';
+// import YouTube from 'react-youtube';
+import { Markdown } from 'react-showdown';
+
+import ReactPlayer from 'react-player'
 
 import './Video.scss'
 import Button from './../Button/Button'
-const params = { 
-        height: '200',
-        width: '100%',
-        playerVars: { // https://developers.google.com/youtube/player_parameters
-        autoplay: 1
-    }
-}
+
 let paragraphes = []
 
 const subStringData = (text) => {
@@ -32,23 +29,19 @@ const Video = ( { video, color, order, slug, items, chapitre } ) => {
                 video.map( (vid, key) => (
                     <div className="video-content" key={key}>
                         <div className="video__video-subtitle">
-                            <h2> Interview </h2>
+                            <h2> {chapitre} </h2>
                         </div>
                         <div className="video__video-name">
-                            <h1> { vid.Titre } </h1>
+                            <h1> { vid.titre } </h1>
                         </div>
+                        <div className="video-player-container">
+                            <ReactPlayer url={vid.url_video} playing width='100%' height='100%'/>
+                        </div>
+
                         <div className="video__video-text-container">
-                            { 
-                                paragraphes.map( (paragraphe, key) => (
-                                    <p className="video__paragraphe" key={key}> { paragraphe } </p>
-                                ) ) 
-                            }
+                            <Markdown markup={ vid.Texte } /> 
                         </div>
-                        <YouTube
-                            className="player"
-                            videoId={ "AKrOePSXbQQ" }
-                            opts={params}
-                        />
+                        
                         {
                             items.pop().ordre !== order 
                             ?   

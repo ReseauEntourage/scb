@@ -7,27 +7,18 @@
   },
   "options": {
     "increments": true,
-    "timestamps": true,
+    "timestamps": [
+      "created_at",
+      "updated_at"
+    ],
     "comment": ""
   },
   "attributes": {
     "Titre": {
       "type": "string"
     },
-    "duree": {
-      "type": "integer"
-    },
-    "background": {
-      "model": "file",
-      "via": "related",
-      "plugin": "upload"
-    },
     "texte_personnage": {
       "type": "text"
-    },
-    "parcour": {
-      "model": "parcours",
-      "via": "entetes"
     },
     "chapitre": {
       "enum": [
@@ -36,7 +27,12 @@
         "Agir",
         "Intro"
       ],
-      "type": "enumeration"
+      "type": "enumeration",
+      "default": "Intro"
+    },
+    "parcour": {
+      "model": "parcours",
+      "via": "entetes"
     }
   }
 }

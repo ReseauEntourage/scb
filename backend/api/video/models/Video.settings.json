@@ -14,15 +14,11 @@
     "comment": ""
   },
   "attributes": {
-    "Titre": {
+    "titre": {
       "type": "string"
     },
     "Texte": {
       "type": "text"
-    },
-    "parcour": {
-      "model": "parcours",
-      "via": "videos"
     },
     "url_video": {
       "type": "string"
@@ -33,10 +29,15 @@
         "Changer",
         "Agir"
       ],
-      "type": "enumeration"
+      "type": "enumeration",
+      "default": "Comprendre"
     },
     "ordre": {
       "type": "string"
+    },
+    "parcour": {
+      "model": "parcours",
+      "via": "videos"
     }
   }
 }
