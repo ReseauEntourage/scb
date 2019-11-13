@@ -15,7 +15,7 @@
   },
   "attributes": {
     "titre": {
-      "type": "text"
+      "type": "richtext"
     },
     "bonne_reponse": {
       "enum": [
@@ -36,7 +36,7 @@
       "type": "string"
     },
     "explication": {
-      "type": "text"
+      "type": "richtext"
     },
     "ordre": {
       "type": "string"

@@ -11,7 +11,7 @@
 const _ = require('lodash');
 
 // Strapi utilities.
-const utils = require('strapi-hook-bookshelf/lib/utils/');
+// const utils = require('strapi-hook-bookshelf/lib/utils/');
 const { convertRestQueryParams, buildQuery } = require('strapi-utils');
 
 

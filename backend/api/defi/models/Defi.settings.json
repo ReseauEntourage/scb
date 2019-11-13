@@ -15,7 +15,7 @@
       "type": "string"
     },
     "contenu": {
-      "type": "text"
+      "type": "richtext"
     },
     "parcours": {
       "collection": "parcours",

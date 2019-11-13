@@ -18,10 +18,10 @@
       "type": "string"
     },
     "paragraphe": {
-      "type": "text"
+      "type": "richtext"
     },
     "character_quote": {
-      "type": "text"
+      "type": "richtext"
     },
     "chapitre": {
       "enum": [

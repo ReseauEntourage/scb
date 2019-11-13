@@ -18,7 +18,7 @@
       "type": "string"
     },
     "Texte": {
-      "type": "text"
+      "type": "richtext"
     },
     "url_video": {
       "type": "string"
